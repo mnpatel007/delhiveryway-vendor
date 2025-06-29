@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useCallback } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -52,9 +52,9 @@ const VendorDashboard = () => {
             try {
                 setLoading(true);
                 const [shopRes, productRes, statsRes] = await Promise.all([
-                    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/shops/vendor`, { headers: { Authorization: `Bearer ${token}` } }),
-                    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/vendors`, { headers: { Authorization: `Bearer ${token}` } }),
-                    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/vendor/stats`, { headers: { Authorization: `Bearer ${token}` } })
+                    axios.get('https://delhiveryway-backend-1.onrender.com/api/shops/vendor', { headers: { Authorization: `Bearer ${token}` } }),
+                    axios.get('https://delhiveryway-backend-1.onrender.com/api/products/vendors', { headers: { Authorization: `Bearer ${token}` } }),
+                    axios.get('https://delhiveryway-backend-1.onrender.com/api/vendor/stats', { headers: { Authorization: `Bearer ${token}` } })
                 ]);
                 setShops(shopRes.data);
                 setProducts(productRes.data);
@@ -80,14 +80,20 @@ const VendorDashboard = () => {
         if (!persistentOrder) return;
 
         try {
-            const reason = status === 'cancelled' ? prompt('Enter reason for rejection:') : null;
+            if (status === 'cancelled') {
+                const confirm = window.confirm('Rejecting this order will trigger a refund to the customer. Continue?');
+                if (!confirm) return;
 
-            await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${persistentOrder.orderId}`, {
-                status,
-                reason
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+                await axios.post(`https://delhiveryway-backend-1.onrender.com/api/payment/refund/${persistentOrder.orderId}`, {}, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            } else {
+                await axios.put(`https://delhiveryway-backend-1.onrender.com/api/vendor/orders/${persistentOrder.orderId}`, {
+                    status
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            }
 
             localStorage.removeItem('persistentVendorOrder');
             setPersistentOrder(null);
@@ -101,11 +107,11 @@ const VendorDashboard = () => {
         if (!window.confirm('Are you sure you want to delete this shop and its products?')) return;
 
         try {
-            await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/shops/${shopId}`, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.delete(`https://delhiveryway-backend-1.onrender.com/api/shops/${shopId}`, { headers: { Authorization: `Bearer ${token}` } });
 
             const [shopRes, productRes] = await Promise.all([
-                axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/shops/vendor`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/vendors`, { headers: { Authorization: `Bearer ${token}` } })
+                axios.get('https://delhiveryway-backend-1.onrender.com/api/shops/vendor', { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get('https://delhiveryway-backend-1.onrender.com/api/products/vendors', { headers: { Authorization: `Bearer ${token}` } })
             ]);
             setShops(shopRes.data);
             setProducts(productRes.data);
@@ -119,8 +125,8 @@ const VendorDashboard = () => {
         if (!window.confirm('Are you sure you want to delete this product?')) return;
 
         try {
-            await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/products/${productId}`, { headers: { Authorization: `Bearer ${token}` } });
-            const productRes = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/vendors`, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.delete(`https://delhiveryway-backend-1.onrender.com/api/products/${productId}`, { headers: { Authorization: `Bearer ${token}` } });
+            const productRes = await axios.get('https://delhiveryway-backend-1.onrender.com/api/products/vendors', { headers: { Authorization: `Bearer ${token}` } });
             setProducts(productRes.data);
         } catch (err) {
             console.error('Delete product error:', err);
@@ -134,6 +140,22 @@ const VendorDashboard = () => {
         if (!groupedProducts[shopId]) groupedProducts[shopId] = [];
         groupedProducts[shopId].push(product);
     });
+
+    const calculateGrandTotal = () => {
+        if (!persistentOrder) return 0;
+
+        let itemTotal = 0;
+        const uniqueShopIds = new Set();
+
+        persistentOrder.items.forEach(item => {
+            itemTotal += item.price * item.quantity;
+            uniqueShopIds.add(item.shopId);
+        });
+
+        const gst = itemTotal * 0.05;
+        const delivery = uniqueShopIds.size * 10;
+        return itemTotal + gst + delivery;
+    };
 
     if (loading) return <div className="loading-container"><div className="spinner"></div><p>Loading Vendor Dashboard...</p></div>;
     if (error) return <div className="error-container"><p>{error}</p><button onClick={() => window.location.reload()}>Retry</button></div>;
@@ -212,6 +234,7 @@ const VendorDashboard = () => {
                                 <li key={idx}>{item.shopName} - {item.name} × {item.quantity}</li>
                             ))}
                         </ul>
+                        <p><strong>Grand Total:</strong> ₹{calculateGrandTotal().toFixed(2)}</p>
                         <div className="persistent-modal-actions">
                             <button onClick={() => handleOrderAction('preparing')} className="accept-btn">✅ Accept</button>
                             <button onClick={() => handleOrderAction('cancelled')} className="reject-btn">❌ Reject</button>
