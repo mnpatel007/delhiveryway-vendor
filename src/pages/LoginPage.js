@@ -30,7 +30,7 @@ const VendorLoginPage = () => {
             }
 
             login(res.data);
-            navigate('/vendor');
+            navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');
         }
