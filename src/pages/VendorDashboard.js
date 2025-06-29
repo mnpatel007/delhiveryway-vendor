@@ -209,7 +209,7 @@ const VendorDashboard = () => {
                         <p><strong>Delivery Address:</strong> {persistentOrder.address}</p>
                         <ul>
                             {persistentOrder.items.map((item, idx) => (
-                                <li key={idx}>{item.shopName} - {item.name} × {item.quantity}</li>
+                                <li key={idx}>{item.shopName} - {item.name} × {item.quantity} - {item.description}</li>
                             ))}
                         </ul>
                         <div className="persistent-modal-actions">
