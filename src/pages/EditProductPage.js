@@ -19,7 +19,7 @@ const EditProductPage = () => {
         try {
             setLoading(true);
             setFetchError(null);
-            const res = await axios.get(`http://localhost:5000/api/products/${id}`, {
+            const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/${id}`, {
                 headers: { Authorization: `Bearer ${user.token}` },
             });
             const { name, description, price } = res.data;
@@ -59,7 +59,7 @@ const EditProductPage = () => {
         try {
             setSubmitLoading(true);
             await axios.put(
-                `http://localhost:5000/api/products/${id}`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/products/${id}`,
                 {
                     name: form.name.trim(),
                     description: form.description.trim(),

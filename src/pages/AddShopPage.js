@@ -33,7 +33,7 @@ const AddShopPage = () => {
         try {
             setLoading(true);
             await axios.post(
-                'http://localhost:5000/api/shops',
+                `${process.env.REACT_APP_BACKEND_URL}/api/shops`,
                 {
                     name: form.name.trim(),
                     description: form.description.trim(),

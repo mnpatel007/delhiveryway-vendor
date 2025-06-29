@@ -24,7 +24,7 @@ const AddProductPage = () => {
         try {
             setShopsLoading(true);
             setShopsError(null);
-            const res = await axios.get('http://localhost:5000/api/shops/vendor', {
+            const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/shops/vendor`, {
                 headers: { Authorization: `Bearer ${user.token}` },
             });
             setShops(res.data);
@@ -67,7 +67,7 @@ const AddProductPage = () => {
         try {
             setLoading(true);
             await axios.post(
-                'http://localhost:5000/api/products',
+                `${process.env.REACT_APP_BACKEND_URL}/api/products`,
                 {
                     name: form.name.trim(),
                     description: form.description.trim(),

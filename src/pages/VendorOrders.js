@@ -17,7 +17,7 @@ const VendorOrders = () => {
         try {
             setLoading(true);
             setError(null);
-            const res = await axios.get('http://localhost:5000/api/vendor/orders', {
+            const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
@@ -43,7 +43,7 @@ const VendorOrders = () => {
         try {
             setStatusUpdating(orderId);
             await axios.put(
-                `http://localhost:5000/api/vendor/orders/${orderId}`,
+                `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${orderId}`,
                 { status: newStatus },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
