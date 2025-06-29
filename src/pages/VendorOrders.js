@@ -1,75 +1,149 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import './VendorOrders.css';
 
 const VendorOrders = () => {
     const { user } = useContext(AuthContext);
     const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [statusUpdating, setStatusUpdating] = useState(null);
+    const [error, setError] = useState(null);
 
-    const token = user?.token || localStorage.getItem('token');
+    const token = user?.token;
 
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
+        if (!token) return;
         try {
+            setLoading(true);
+            setError(null);
             const res = await axios.get('http://localhost:5000/api/vendor/orders', {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
-            setOrders(res.data);
+
+            // Sort orders newest first
+            const sorted = res.data.sort(
+                (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+            );
+            setOrders(sorted);
         } catch (err) {
             console.error('Failed to fetch orders:', err.response?.data || err.message);
+            setError('Failed to fetch orders. Please try again later.');
+        } finally {
+            setLoading(false);
         }
-    };
-
-    const updateStatus = async (orderId, newStatus) => {
-        try {
-            await axios.put(`http://localhost:5000/api/vendor/orders/${orderId}`, { status: newStatus }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            fetchOrders();
-        } catch (err) {
-            console.error('Failed to update status');
-        }
-    };
+    }, [token]);
 
     useEffect(() => {
         fetchOrders();
-    }, []);
+    }, [fetchOrders]);
+
+    const updateStatus = async (orderId, newStatus) => {
+        if (!token) return;
+        try {
+            setStatusUpdating(orderId);
+            await axios.put(
+                `http://localhost:5000/api/vendor/orders/${orderId}`,
+                { status: newStatus },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            await fetchOrders();
+        } catch (err) {
+            console.error('Failed to update status:', err.response?.data || err.message);
+            alert('Failed to update status. Please try again.');
+        } finally {
+            setStatusUpdating(null);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="vendor-orders-loading" role="status" aria-live="polite">
+                Loading orders...
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="vendor-orders-error" role="alert" aria-live="assertive">
+                {error}
+            </div>
+        );
+    }
 
     return (
-        <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">Vendor Orders</h2>
+        <div className="vendor-orders-container">
+            <h2 className="vendor-orders-title">Vendor Orders</h2>
+
             {orders.length === 0 ? (
-                <p>No orders yet.</p>
+                <p className="vendor-orders-empty">No orders yet.</p>
             ) : (
                 orders.map(order => (
-                    <div key={order._id} className="border rounded p-4 mb-4 bg-white shadow">
-                        <div className="text-sm text-gray-500">
+                    <article
+                        key={order._id}
+                        className="order-card"
+                        aria-live="polite"
+                        aria-relevant="additions"
+                    >
+                        <time dateTime={order.createdAt} className="order-time">
                             Date: {new Date(order.createdAt).toLocaleString()}
-                        </div>
-                        <div className="font-semibold">Customer: {order.customer.name}</div>
-                        <div className="text-sm mb-2">Address: {order.address}</div>
+                        </time>
 
-                        <ul className="mb-2">
+                        <div className="order-customer">
+                            Customer: {order.customer?.name || 'N/A'}
+                        </div>
+
+                        <address className="order-address">{order.address}</address>
+
+                        <ul className="order-items">
                             {order.items.map(item => (
                                 <li key={item._id}>
-                                    {item.productId.name} × {item.quantity}
+                                    {item.productId?.name || 'Unknown Product'} × {item.quantity}
                                 </li>
                             ))}
                         </ul>
 
-                        <div className="flex items-center space-x-2">
-                            <label>Status:</label>
-                            <select
-                                value={order.status}
-                                onChange={e => updateStatus(order._id, e.target.value)}
-                                className="border rounded px-2 py-1"
+                        <div className="order-status-container">
+                            <strong>Status:</strong>
+                            <span
+                                className={`order-status-badge status-${order.status
+                                    .replace(/\s+/g, '-')
+                                    .toLowerCase()}`}
                             >
-                                <option value="pending">Pending</option>
-                                <option value="preparing">Preparing</option>
-                                <option value="out for delivery">Out for Delivery</option>
-                                <option value="delivered">Delivered</option>
-                            </select>
+                                {order.status}
+                            </span>
+
+                            {(order.status === 'preparing' || order.status === 'out for delivery') && (
+                                <select
+                                    aria-label={`Update status for order ${order._id}`}
+                                    value={order.status}
+                                    onChange={e => updateStatus(order._id, e.target.value)}
+                                    disabled={statusUpdating === order._id}
+                                    className="status-select"
+                                >
+                                    {order.status === 'preparing' && (
+                                        <>
+                                            <option value="preparing">Preparing</option>
+                                            <option value="out for delivery">Out for Delivery</option>
+                                        </>
+                                    )}
+                                    {order.status === 'out for delivery' && (
+                                        <>
+                                            <option value="out for delivery">Out for Delivery</option>
+                                            <option value="delivered">Delivered</option>
+                                        </>
+                                    )}
+                                </select>
+                            )}
                         </div>
-                    </div>
+
+                        {order.status === 'cancelled' && order.reason && (
+                            <p className="order-reason">
+                                <strong>Rejection Reason:</strong> {order.reason}
+                            </p>
+                        )}
+                    </article>
                 ))
             )}
         </div>

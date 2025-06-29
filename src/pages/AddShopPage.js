@@ -2,30 +2,144 @@ import React, { useState, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import './AddShopPage.css';
 
 const AddShopPage = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
     const [form, setForm] = useState({ name: '', description: '', location: '' });
+    const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState({});
 
-    const handleSubmit = async () => {
+    // Validate form fields
+    const validate = () => {
+        const errors = {};
+        if (!form.name.trim()) errors.name = 'Name is required';
+        if (!form.description.trim()) errors.description = 'Description is required';
+        if (!form.location.trim()) errors.location = 'Location is required';
+        setErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    const handleChange = (e) => {
+        setForm({ ...form, [e.target.name]: e.target.value });
+        setErrors({ ...errors, [e.target.name]: '' }); // Clear error on input change
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!validate()) return;
+
         try {
-            await axios.post('http://localhost:5000/api/shops', form, {
-                headers: { Authorization: `Bearer ${user.token}` }
-            });
+            setLoading(true);
+            await axios.post(
+                'http://localhost:5000/api/shops',
+                {
+                    name: form.name.trim(),
+                    description: form.description.trim(),
+                    location: form.location.trim(),
+                },
+                {
+                    headers: { Authorization: `Bearer ${user.token}` },
+                }
+            );
+            setLoading(false);
             navigate('/');
         } catch (err) {
-            alert('Failed to add shop');
+            setLoading(false);
+            alert(err?.response?.data?.message || 'Failed to add shop. Please try again.');
         }
     };
 
     return (
-        <div>
+        <div className="add-shop-container" style={{ maxWidth: 600, margin: '2rem auto', padding: '1rem' }}>
             <h2>Add Shop</h2>
-            <input placeholder="Name" onChange={e => setForm({ ...form, name: e.target.value })} />
-            <input placeholder="Description" onChange={e => setForm({ ...form, description: e.target.value })} />
-            <input placeholder="Location" onChange={e => setForm({ ...form, location: e.target.value })} />
-            <button onClick={handleSubmit}>Save</button>
+            <form onSubmit={handleSubmit} noValidate>
+                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                    <label htmlFor="name" style={{ display: 'block', marginBottom: 4 }}>
+                        Name <span style={{ color: 'red' }}>*</span>
+                    </label>
+                    <input
+                        id="name"
+                        name="name"
+                        value={form.name}
+                        onChange={handleChange}
+                        placeholder="Enter shop name"
+                        className={`input-field ${errors.name ? 'input-error' : ''}`}
+                        disabled={loading}
+                        style={{
+                            width: '100%',
+                            padding: '0.5rem',
+                            borderRadius: 4,
+                            border: errors.name ? '1px solid red' : '1px solid #ccc',
+                        }}
+                    />
+                    {errors.name && <small style={{ color: 'red' }}>{errors.name}</small>}
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                    <label htmlFor="description" style={{ display: 'block', marginBottom: 4 }}>
+                        Description <span style={{ color: 'red' }}>*</span>
+                    </label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        value={form.description}
+                        onChange={handleChange}
+                        placeholder="Enter shop description"
+                        rows={4}
+                        className={`input-field ${errors.description ? 'input-error' : ''}`}
+                        disabled={loading}
+                        style={{
+                            width: '100%',
+                            padding: '0.5rem',
+                            borderRadius: 4,
+                            border: errors.description ? '1px solid red' : '1px solid #ccc',
+                            resize: 'vertical',
+                        }}
+                    />
+                    {errors.description && <small style={{ color: 'red' }}>{errors.description}</small>}
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                    <label htmlFor="location" style={{ display: 'block', marginBottom: 4 }}>
+                        Location <span style={{ color: 'red' }}>*</span>
+                    </label>
+                    <input
+                        id="location"
+                        name="location"
+                        value={form.location}
+                        onChange={handleChange}
+                        placeholder="Enter shop location"
+                        className={`input-field ${errors.location ? 'input-error' : ''}`}
+                        disabled={loading}
+                        style={{
+                            width: '100%',
+                            padding: '0.5rem',
+                            borderRadius: 4,
+                            border: errors.location ? '1px solid red' : '1px solid #ccc',
+                        }}
+                    />
+                    {errors.location && <small style={{ color: 'red' }}>{errors.location}</small>}
+                </div>
+
+                <button
+                    type="submit"
+                    disabled={loading}
+                    style={{
+                        backgroundColor: '#4ecdc4',
+                        color: '#fff',
+                        padding: '0.75rem 1.5rem',
+                        borderRadius: 6,
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        border: 'none',
+                        fontWeight: 'bold',
+                        width: '100%',
+                    }}
+                >
+                    {loading ? 'Saving...' : 'Save Shop'}
+                </button>
+            </form>
         </div>
     );
 };

@@ -1,0 +1,190 @@
+/* Container */
+.vendor-orders-container {
+    max-width: 960px;
+    margin: 2rem auto;
+    padding: 1rem 1.5rem;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    color: #2d3748;
+}
+
+/* Page Title */
+.vendor-orders-title {
+    font-size: 2rem;
+    font-weight: 700;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0.75rem;
+    margin-bottom: 2rem;
+    color: #2c7a7b;
+    text-align: center;
+}
+
+/* Empty state */
+.vendor-orders-empty {
+    text-align: center;
+    font-size: 1.125rem;
+    color: #718096;
+}
+
+/* Loading and Error */
+.vendor-orders-loading,
+.vendor-orders-error {
+    text-align: center;
+    font-size: 1.125rem;
+    padding: 3rem 1rem;
+    user-select: none;
+}
+
+.vendor-orders-error {
+    color: #e53e3e;
+}
+
+/* Individual Order Card */
+.order-card {
+    background-color: #fff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.75rem;
+    box-shadow: 0 2px 8px rgba(45, 55, 72, 0.08);
+    transition: box-shadow 0.3s ease;
+}
+
+.order-card:hover {
+    box-shadow: 0 4px 20px rgba(45, 55, 72, 0.12);
+}
+
+/* Order Timestamp */
+.order-time {
+    font-size: 0.875rem;
+    color: #a0aec0;
+    margin-bottom: 0.5rem;
+    display: block;
+    user-select: text;
+}
+
+/* Customer Name */
+.order-customer {
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: #2d3748;
+    margin-bottom: 0.25rem;
+    user-select: text;
+}
+
+/* Address */
+.order-address {
+    font-size: 0.925rem;
+    color: #4a5568;
+    font-style: normal;
+    margin-bottom: 1rem;
+    user-select: text;
+}
+
+/* Items List */
+.order-items {
+    list-style-type: disc;
+    list-style-position: inside;
+    color: #4a5568;
+    margin-bottom: 1rem;
+    padding-left: 1rem;
+    font-size: 1rem;
+    user-select: text;
+}
+
+/* Status Container */
+.order-status-container {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    user-select: none;
+}
+
+/* Status Badge */
+.order-status-badge {
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 9999px;
+    /* fully rounded */
+    text-transform: capitalize;
+    user-select: none;
+}
+
+/* Status colors */
+.status-preparing {
+    background-color: #faf089;
+    color: #744210;
+}
+
+.status-out-for-delivery {
+    background-color: #63b3ed;
+    color: #1a365d;
+}
+
+.status-delivered {
+    background-color: #c6f6d5;
+    color: #22543d;
+}
+
+.status-cancelled {
+    background-color: #fed7d7;
+    color: #742a2a;
+}
+
+/* Status select dropdown */
+.status-select {
+    border: 1.5px solid #cbd5e0;
+    border-radius: 8px;
+    padding: 0.4rem 0.75rem;
+    font-size: 1rem;
+    cursor: pointer;
+    color: #2d3748;
+    min-width: 180px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    user-select: none;
+}
+
+.status-select:focus {
+    outline: none;
+    border-color: #3182ce;
+    box-shadow: 0 0 8px #90cdf4;
+}
+
+.status-select:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    background-color: #edf2f7;
+}
+
+/* Rejection Reason */
+.order-reason {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #c53030;
+    user-select: text;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .vendor-orders-container {
+        padding: 1rem;
+    }
+
+    .order-card {
+        padding: 1.25rem 1.5rem;
+    }
+
+    .order-status-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .status-select {
+        min-width: 100%;
+    }
+}

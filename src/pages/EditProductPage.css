@@ -1,0 +1,192 @@
+/* Container */
+.edit-product-container {
+    max-width: 600px;
+    margin: 3rem auto;
+    padding: 2rem 2.5rem;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    color: #333;
+    transition: box-shadow 0.3s ease;
+}
+
+.edit-product-container:hover {
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.16);
+}
+
+/* Title */
+.page-title {
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: #2b6cb0;
+    /* blue */
+    text-align: center;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1.75rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.6rem;
+    color: #2d3748;
+    cursor: pointer;
+}
+
+.required {
+    color: #e53e3e;
+    margin-left: 4px;
+}
+
+/* Inputs and textarea */
+input,
+textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    border: 2px solid #cbd5e0;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: #2d3748;
+    background: #f9fafb;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.05);
+    font-family: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #a0aec0;
+    font-style: italic;
+}
+
+input:focus,
+textarea:focus {
+    outline: none;
+    border-color: #3182ce;
+    /* nice blue */
+    background-color: #fff;
+    box-shadow: 0 0 10px #90cdf4;
+}
+
+/* Textarea */
+textarea {
+    resize: vertical;
+    min-height: 130px;
+}
+
+/* Error states */
+.input-error {
+    border-color: #e53e3e !important;
+    background-color: #fff5f5 !important;
+    box-shadow: 0 0 8px #feb2b2 !important;
+}
+
+.input-error:focus {
+    box-shadow: 0 0 12px #fc8181 !important;
+}
+
+.error-text {
+    color: #e53e3e;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-top: 6px;
+}
+
+/* Buttons */
+.btn-primary {
+    width: 100%;
+    padding: 1rem 0;
+    background: linear-gradient(135deg, #3182ce 0%, #63b3ed 100%);
+    color: white;
+    font-weight: 700;
+    font-size: 1.25rem;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    box-shadow: 0 8px 15px rgba(99, 179, 237, 0.6);
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #2c5282 0%, #3182ce 100%);
+    box-shadow: 0 10px 20px rgba(44, 82, 130, 0.7);
+    transform: translateY(-2px);
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 4px 10px rgba(44, 82, 130, 0.5);
+}
+
+.btn-primary:disabled {
+    background: #90cdf4;
+    box-shadow: none;
+    cursor: not-allowed;
+    color: #e1eaff;
+}
+
+/* Loading & error containers */
+.loading-container,
+.error-container {
+    max-width: 600px;
+    margin: 4rem auto;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+    color: #2d3748;
+}
+
+.error-message {
+    color: #e53e3e;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.retry-button {
+    background: linear-gradient(135deg, #3182ce 0%, #63b3ed 100%);
+    color: white;
+    font-weight: 700;
+    padding: 0.85rem 1.6rem;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    box-shadow: 0 8px 15px rgba(99, 179, 237, 0.6);
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.retry-button:hover {
+    background: linear-gradient(135deg, #2c5282 0%, #3182ce 100%);
+    box-shadow: 0 10px 20px rgba(44, 82, 130, 0.7);
+    transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .edit-product-container {
+        margin: 2rem 1rem;
+        padding: 1.5rem 1.2rem;
+    }
+
+    .page-title {
+        font-size: 2rem;
+    }
+
+    .btn-primary {
+        font-size: 1.15rem;
+        padding: 0.9rem 0;
+    }
+}
