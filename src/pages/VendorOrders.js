@@ -103,6 +103,12 @@ const VendorOrders = () => {
                                 </li>
                             ))}
                         </ul>
+                        <div className="order-total">
+                            <strong>Items Total:</strong> ₹{(order.totalAmount - order.deliveryCharge).toFixed(2)}<br />
+                            <strong>Delivery Charge:</strong> ₹{order.deliveryCharge.toFixed(2)}<br />
+                            <strong>Grand Total:</strong> ₹{order.totalAmount.toFixed(2)}
+                        </div>
+
 
                         <div className="order-status-container">
                             <strong>Status:</strong>
