@@ -33,7 +33,7 @@ const VendorDashboard = () => {
     };
 
     useEffect(() => {
-        const socket = io('http://localhost:5000');
+        const socket = io('https://delhiveryway-backend-1.onrender.com');
         socket.emit('registerVendor', user.user._id);
 
         const storedOrder = localStorage.getItem('persistentVendorOrder');
@@ -52,9 +52,9 @@ const VendorDashboard = () => {
             try {
                 setLoading(true);
                 const [shopRes, productRes, statsRes] = await Promise.all([
-                    axios.get('http://localhost:5000/api/shops/vendor', { headers: { Authorization: `Bearer ${token}` } }),
-                    axios.get('http://localhost:5000/api/products/vendors', { headers: { Authorization: `Bearer ${token}` } }),
-                    axios.get('http://localhost:5000/api/vendor/stats', { headers: { Authorization: `Bearer ${token}` } })
+                    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/shops/vendor`, { headers: { Authorization: `Bearer ${token}` } }),
+                    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/vendors`, { headers: { Authorization: `Bearer ${token}` } }),
+                    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/vendor/stats`, { headers: { Authorization: `Bearer ${token}` } })
                 ]);
                 setShops(shopRes.data);
                 setProducts(productRes.data);
@@ -82,7 +82,7 @@ const VendorDashboard = () => {
         try {
             const reason = status === 'cancelled' ? prompt('Enter reason for rejection:') : null;
 
-            await axios.put(`http://localhost:5000/api/vendor/orders/${persistentOrder.orderId}`, {
+            await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${persistentOrder.orderId}`, {
                 status,
                 reason
             }, {
@@ -101,11 +101,11 @@ const VendorDashboard = () => {
         if (!window.confirm('Are you sure you want to delete this shop and its products?')) return;
 
         try {
-            await axios.delete(`http://localhost:5000/api/shops/${shopId}`, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/shops/${shopId}`, { headers: { Authorization: `Bearer ${token}` } });
 
             const [shopRes, productRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/shops/vendor', { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get('http://localhost:5000/api/products/vendors', { headers: { Authorization: `Bearer ${token}` } })
+                axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/shops/vendor`, { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/vendors`, { headers: { Authorization: `Bearer ${token}` } })
             ]);
             setShops(shopRes.data);
             setProducts(productRes.data);
@@ -119,8 +119,8 @@ const VendorDashboard = () => {
         if (!window.confirm('Are you sure you want to delete this product?')) return;
 
         try {
-            await axios.delete(`http://localhost:5000/api/products/${productId}`, { headers: { Authorization: `Bearer ${token}` } });
-            const productRes = await axios.get('http://localhost:5000/api/products/vendors', { headers: { Authorization: `Bearer ${token}` } });
+            await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/products/${productId}`, { headers: { Authorization: `Bearer ${token}` } });
+            const productRes = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/vendors`, { headers: { Authorization: `Bearer ${token}` } });
             setProducts(productRes.data);
         } catch (err) {
             console.error('Delete product error:', err);
