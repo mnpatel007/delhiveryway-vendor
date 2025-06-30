@@ -1,10 +1,7 @@
-// /client-vendor/src/pages/VendorDashboard.js
-
 import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import io from 'socket.io-client';
 import './VendorDashboard.css';
 
 const VendorDashboard = () => {
@@ -14,54 +11,31 @@ const VendorDashboard = () => {
     const [shops, setShops] = useState([]);
     const [products, setProducts] = useState([]);
     const [stats, setStats] = useState({ totalShops: 0, totalProducts: 0, totalOrders: 0 });
-    const [persistentOrder, setPersistentOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const token = user.token;
 
-    const playAlertSound = () => {
-        const audio = new Audio('/alert.mp3');
-        audio.volume = 1.0;
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(() => {
-                const resume = () => {
-                    audio.play();
-                    document.removeEventListener('click', resume);
-                };
-                document.addEventListener('click', resume);
-            });
-        }
-    };
-
     useEffect(() => {
-        const socket = io('https://delhiveryway-backend-1.onrender.com');
-        socket.emit('registerVendor', user.user._id);
-
-        const storedOrder = localStorage.getItem('persistentVendorOrder');
-        if (storedOrder) {
-            setPersistentOrder(JSON.parse(storedOrder));
-        }
-
-        socket.on('newOrder', (orderData) => {
-            playAlertSound();
-            localStorage.setItem('persistentVendorOrder', JSON.stringify(orderData));
-            setPersistentOrder(orderData);
-        });
-
         const fetchData = async () => {
             try {
                 setLoading(true);
                 const [shopRes, productRes, statsRes] = await Promise.all([
-                    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/shops/vendor`, { headers: { Authorization: `Bearer ${token}` } }),
-                    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/vendors`, { headers: { Authorization: `Bearer ${token}` } }),
-                    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/vendor/stats`, { headers: { Authorization: `Bearer ${token}` } })
+                    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/shops/vendor`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }),
+                    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/vendors`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }),
+                    axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/vendor/stats`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    })
                 ]);
                 setShops(shopRes.data);
                 setProducts(productRes.data);
                 setStats(statsRes.data);
                 setError(null);
             } catch (err) {
+                console.error('Dashboard fetch error:', err);
                 setError('Failed to load dashboard data');
             } finally {
                 setLoading(false);
@@ -69,45 +43,28 @@ const VendorDashboard = () => {
         };
 
         fetchData();
-
-        return () => {
-            socket.off('newOrder');
-            socket.disconnect();
-        };
-    }, [user.user._id, token]);
-
-    const handleOrderAction = async (status) => {
-        if (!persistentOrder) return;
-
-        try {
-            const reason = status === 'cancelled' ? prompt('Enter reason for rejection:') : null;
-
-            await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${persistentOrder.orderId}`, {
-                status,
-                reason
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            localStorage.removeItem('persistentVendorOrder');
-            setPersistentOrder(null);
-        } catch (err) {
-            alert('Failed to process order. Please try again.');
-        }
-    };
+    }, [token]);
 
     const handleDeleteShop = async (shopId) => {
         if (!window.confirm('Are you sure you want to delete this shop and its products?')) return;
+
         try {
-            await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/shops/${shopId}`, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/shops/${shopId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
             const [shopRes, productRes] = await Promise.all([
-                axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/shops/vendor`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/vendors`, { headers: { Authorization: `Bearer ${token}` } })
+                axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/shops/vendor`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                }),
+                axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/vendors`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
             ]);
             setShops(shopRes.data);
             setProducts(productRes.data);
         } catch (err) {
+            console.error('Delete shop error:', err);
             alert('Failed to delete shop.');
         }
     };
@@ -116,10 +73,15 @@ const VendorDashboard = () => {
         if (!window.confirm('Are you sure you want to delete this product?')) return;
 
         try {
-            await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/products/${productId}`, { headers: { Authorization: `Bearer ${token}` } });
-            const productRes = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/vendors`, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/products/${productId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const productRes = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/vendors`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setProducts(productRes.data);
         } catch (err) {
+            console.error('Delete product error:', err);
             alert('Failed to delete product.');
         }
     };
@@ -197,24 +159,6 @@ const VendorDashboard = () => {
                     ))
                 )}
             </div>
-
-            {persistentOrder && (
-                <div className="persistent-order-modal">
-                    <div className="persistent-modal-content">
-                        <h3>🆕 New Order Alert</h3>
-                        <p><strong>Delivery Address:</strong> {persistentOrder.address}</p>
-                        <ul>
-                            {persistentOrder.items.map((item, idx) => (
-                                <li key={idx}>{item.shopName} - {item.name} × {item.quantity}</li>
-                            ))}
-                        </ul>
-                        <div className="persistent-modal-actions">
-                            <button onClick={() => handleOrderAction('preparing')} className="accept-btn">✅ Accept</button>
-                            <button onClick={() => handleOrderAction('cancelled')} className="reject-btn">❌ Reject</button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

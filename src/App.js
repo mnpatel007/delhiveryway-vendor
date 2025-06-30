@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
+import { VendorOrderProvider, VendorOrderContext } from './context/VendorOrderContext';
+import axios from 'axios';
+import './pages/VendorDashboard.css';
+
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import VendorDashboard from './pages/VendorDashboard';
@@ -10,36 +14,129 @@ import Navbar from './components/Navbar';
 import EditProductPage from './pages/EditProductPage';
 import VendorOrders from './pages/VendorOrders';
 
+// 🔐 Private route wrapper for vendors
 const PrivateRoute = ({ children }) => {
-  const { user } = React.useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   return user && user.user.role === 'vendor' ? children : <Navigate to="/login" />;
 };
 
-const AppRoutes = () => {
+// 🔔 Global order modal shown on all vendor pages
+const GlobalOrderModal = () => {
+  const { newOrder, clearOrder } = useContext(VendorOrderContext);
+  const { user } = useContext(AuthContext);
+
+  // 🔊 Play sound on order alert
+  const playAlertSound = () => {
+    const audio = new Audio('/alert.mp3');
+    audio.volume = 1.0;
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        const resume = () => {
+          audio.play();
+          document.removeEventListener('click', resume);
+        };
+        document.addEventListener('click', resume);
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (newOrder) playAlertSound();
+  }, [newOrder]);
+
+  const handleAction = async (status) => {
+    if (!newOrder) return;
+
+    let reason = null;
+    if (status === 'cancelled') {
+      reason = prompt('Enter reason for rejection:');
+      if (!reason || reason.trim() === '') {
+        alert('❌ You must provide a reason to reject the order.');
+        return;
+      }
+    }
+
+    try {
+      await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}`, {
+        status,
+        reason
+      }, {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+
+      clearOrder();
+    } catch (err) {
+      alert('Failed to process order.');
+    }
+  };
+
+  if (!newOrder) return null;
+
+  return (
+    <div className="persistent-order-modal">
+      <div className="persistent-modal-content">
+        <h3>🆕 New Order Alert</h3>
+        <p><strong>Delivery Address:</strong> {newOrder.address}</p>
+        <ul>
+          {newOrder.items.map((item, idx) => (
+            <li key={idx}>{item.shopName} - {item.name} × {item.quantity}</li>
+          ))}
+        </ul>
+        <div className="persistent-modal-actions">
+          <button onClick={() => handleAction('preparing')} className="accept-btn">✅ Accept</button>
+          <button onClick={() => handleAction('cancelled')} className="reject-btn">❌ Reject</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 🧭 Layout wrapper to conditionally show Navbar
+const Layout = ({ children }) => {
   const location = useLocation();
   const hideNavbar = location.pathname === '/login' || location.pathname === '/signup';
 
   return (
     <>
       {!hideNavbar && <Navbar />}
-      <Routes>
-        <Route path="/" element={<PrivateRoute><VendorDashboard /></PrivateRoute>} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/add-shop" element={<PrivateRoute><AddShopPage /></PrivateRoute>} />
-        <Route path="/add-product" element={<PrivateRoute><AddProductPage /></PrivateRoute>} />
-        <Route path="/edit-product/:id" element={<PrivateRoute><EditProductPage /></PrivateRoute>} />
-        <Route path="/vendor-orders" element={<PrivateRoute><VendorOrders /></PrivateRoute>} />
-      </Routes>
+      {children}
     </>
   );
 };
 
+// 📦 App routes (wrapped inside Layout)
+const AppRoutes = () => (
+  <Routes>
+    <Route path="/" element={<PrivateRoute><VendorDashboard /></PrivateRoute>} />
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/signup" element={<SignupPage />} />
+    <Route path="/add-shop" element={<PrivateRoute><AddShopPage /></PrivateRoute>} />
+    <Route path="/add-product" element={<PrivateRoute><AddProductPage /></PrivateRoute>} />
+    <Route path="/edit-product/:id" element={<PrivateRoute><EditProductPage /></PrivateRoute>} />
+    <Route path="/vendor-orders" element={<PrivateRoute><VendorOrders /></PrivateRoute>} />
+  </Routes>
+);
+
+// 🎯 Main App
 function App() {
+  const { user } = useContext(AuthContext);
+
   return (
     <AuthProvider>
       <BrowserRouter>
-        <AppRoutes />
+        {user?.user?.role === 'vendor' ? (
+          <VendorOrderProvider vendorId={user.user._id}>
+            <GlobalOrderModal />
+            <Layout>
+              <AppRoutes />
+            </Layout>
+          </VendorOrderProvider>
+        ) : (
+          <Layout>
+            <AppRoutes />
+          </Layout>
+        )}
       </BrowserRouter>
     </AuthProvider>
   );
