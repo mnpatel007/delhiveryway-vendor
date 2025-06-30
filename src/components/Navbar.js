@@ -19,7 +19,7 @@ const Navbar = () => {
         <nav className="navbar">
             <div className="navbar-inner">
                 <Link to="/" className="logo" aria-label="DelhiveryWay">
-                    <span className="logo-glow">ShopEase</span>
+                    <span className="logo-glow">DelhiveryWay</span>
                 </Link>
 
                 <button
