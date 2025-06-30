@@ -1,4 +1,3 @@
-// /pages/VendorDashboard.js
 import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
@@ -45,7 +44,7 @@ const VendorDashboard = () => {
     }, [token]);
 
     const handleDeleteShop = async (shopId) => {
-        if (!window.confirm('Are you sure you want to delete this shop and its products?')) return;
+        if (!window.confirm('Are you sure to delete this shop and all its products?')) return;
 
         try {
             await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/shops/${shopId}`, {
@@ -69,7 +68,7 @@ const VendorDashboard = () => {
     };
 
     const handleDeleteProduct = async (productId) => {
-        if (!window.confirm('Are you sure you want to delete this product?')) return;
+        if (!window.confirm('Are you sure to delete this product?')) return;
 
         try {
             await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/products/${productId}`, {
@@ -92,67 +91,113 @@ const VendorDashboard = () => {
         groupedProducts[shopId].push(product);
     });
 
-    if (loading) return <div className="loading-container"><div className="spinner"></div><p>Loading Vendor Dashboard...</p></div>;
-    if (error) return <div className="error-container"><p>{error}</p><button onClick={() => window.location.reload()}>Retry</button></div>;
+    if (loading)
+        return (
+            <main className="loading-container" aria-busy="true" aria-label="Loading vendor dashboard">
+                <div className="spinner"></div>
+                <p>Loading Vendor Dashboard...</p>
+            </main>
+        );
+
+    if (error)
+        return (
+            <main className="error-container" role="alert" aria-live="assertive">
+                <p>{error}</p>
+                <button className="retry-btn" onClick={() => window.location.reload()}>
+                    Retry
+                </button>
+            </main>
+        );
 
     return (
-        <div className="vendor-dashboard">
-            <div className="dashboard-header">
-                <h1>Vendor Dashboard</h1>
-                <p className="welcome-message">Welcome, <strong>{user.user.name}</strong></p>
-            </div>
+        <main className="vendor-dashboard" role="main">
+            <header className="dashboard-header" tabIndex={-1}>
+                <h1 className="dashboard-title">Vendor Dashboard</h1>
+                <p className="welcome-message">
+                    Welcome, <strong>{user.user.name}</strong> 👋
+                </p>
+            </header>
 
-            <div className="dashboard-stats">
-                <div className="stat-card"><h3>{stats.totalShops}</h3><p>Total Shops</p></div>
-                <div className="stat-card"><h3>{stats.totalProducts}</h3><p>Total Products</p></div>
-                <div className="stat-card"><h3>{stats.totalOrders}</h3><p>Total Orders</p></div>
-            </div>
+            <section className="dashboard-stats" aria-label="Your statistics overview">
+                <article className="stat-card stat-shops" tabIndex={0}>
+                    <h2 className="stat-value">{stats.totalShops}</h2>
+                    <p className="stat-label">Total Shops</p>
+                </article>
+                <article className="stat-card stat-products" tabIndex={0}>
+                    <h2 className="stat-value">{stats.totalProducts}</h2>
+                    <p className="stat-label">Total Products</p>
+                </article>
+                <article className="stat-card stat-orders" tabIndex={0}>
+                    <h2 className="stat-value">{stats.totalOrders}</h2>
+                    <p className="stat-label">Total Orders</p>
+                </article>
+            </section>
 
-            <div className="shops-section">
-                <div className="section-header">
-                    <h2>Your Shops</h2>
-                </div>
-
+            <section className="shops-section" aria-label="Your shops">
+                <h2 className="section-heading">Your Shops</h2>
                 {shops.length === 0 ? (
-                    <div className="empty-state">
-                        <p>No shops added yet.</p>
-                    </div>
+                    <article className="empty-state" aria-live="polite" tabIndex={0}>
+                        <p>You have not added any shops yet.</p>
+                    </article>
                 ) : (
                     shops.map(shop => (
-                        <div key={shop._id} className="shop-card">
-                            <div className="shop-header">
-                                <h3>{shop.name}</h3>
-                                <button onClick={() => handleDeleteShop(shop._id)} className="delete-btn">Delete Shop</button>
-                            </div>
+                        <article key={shop._id} className="shop-card" tabIndex={-1}>
+                            <header className="shop-header">
+                                <h3 className="shop-name">{shop.name}</h3>
+                                <button
+                                    className="delete-btn"
+                                    onClick={() => handleDeleteShop(shop._id)}
+                                    aria-label={`Delete shop named ${shop.name}`}
+                                >
+                                    Delete Shop
+                                </button>
+                            </header>
                             <p className="shop-description">{shop.description}</p>
-                            <p className="shop-location"><strong>Location:</strong> {shop.location}</p>
-                            <div className="shop-products">
-                                <div className="products-header">
-                                    <h4>Products in {shop.name}</h4>
-                                </div>
+                            <p className="shop-location">
+                                <strong>Location:</strong> {shop.location}
+                            </p>
+
+                            <section className="shop-products" aria-label={`Products in ${shop.name}`}>
+                                <h4 className="products-heading">Products in {shop.name}</h4>
                                 {(groupedProducts[shop._id] || []).length === 0 ? (
-                                    <p className="no-products">No products added yet.</p>
+                                    <p className="no-products" tabIndex={0}>
+                                        No products added yet.
+                                    </p>
                                 ) : (
                                     <ul className="products-list">
                                         {groupedProducts[shop._id].map(product => (
-                                            <li key={product._id} className="product-item">
+                                            <li key={product._id} className="product-item" tabIndex={-1}>
                                                 <div className="product-details">
-                                                    <span className="product">{product.name} - {product.description} - ₹{product.price}</span>
+                                                    <strong className="product-name">{product.name}</strong>
+                                                    <p className="product-description">{product.description}</p>
+                                                    <p className="product-price">Price: ₹{product.price.toFixed(2)}</p>
                                                 </div>
                                                 <div className="product-actions">
-                                                    <button onClick={() => handleDeleteProduct(product._id)} className="delete-btn small">🗑️ Delete</button>
-                                                    <a href={`/edit-product/${product._id}`} className="edit-btn">✏️ Edit</a>
+                                                    <a
+                                                        href={`/edit-product/${product._id}`}
+                                                        className="edit-btn"
+                                                        aria-label={`Edit product ${product.name}`}
+                                                    >
+                                                        ✏️ Edit
+                                                    </a>
+                                                    <button
+                                                        className="delete-btn small"
+                                                        onClick={() => handleDeleteProduct(product._id)}
+                                                        aria-label={`Delete product ${product.name}`}
+                                                    >
+                                                        🗑️ Delete
+                                                    </button>
                                                 </div>
                                             </li>
                                         ))}
                                     </ul>
                                 )}
-                            </div>
-                        </div>
+                            </section>
+                        </article>
                     ))
                 )}
-            </div>
-        </div>
+            </section>
+        </main>
     );
 };
 
