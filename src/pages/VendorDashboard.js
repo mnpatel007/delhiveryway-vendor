@@ -1,198 +1,163 @@
 import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { FaStore, FaBoxOpen, FaShoppingCart, FaTrash, FaEdit } from 'react-icons/fa';
 import './VendorDashboard.css';
 
 const VendorDashboard = () => {
     const { user } = useContext(AuthContext);
+    const token = user.token;
 
     const [shops, setShops] = useState([]);
     const [products, setProducts] = useState([]);
     const [stats, setStats] = useState({ totalShops: 0, totalProducts: 0, totalOrders: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const token = user.token;
 
     useEffect(() => {
-        const fetchData = async () => {
+        async function fetchData() {
             try {
                 setLoading(true);
-                const [shopRes, productRes, statsRes] = await Promise.all([
+                const [shopsRes, productsRes, statsRes] = await Promise.all([
                     axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/shops/vendor`, {
-                        headers: { Authorization: `Bearer ${token}` }
+                        headers: { Authorization: `Bearer ${token}` },
                     }),
                     axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/vendors`, {
-                        headers: { Authorization: `Bearer ${token}` }
+                        headers: { Authorization: `Bearer ${token}` },
                     }),
                     axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/vendor/stats`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    })
+                        headers: { Authorization: `Bearer ${token}` },
+                    }),
                 ]);
-                setShops(shopRes.data);
-                setProducts(productRes.data);
+                setShops(shopsRes.data);
+                setProducts(productsRes.data);
                 setStats(statsRes.data);
                 setError(null);
-            } catch (err) {
-                console.error('Dashboard fetch error:', err);
-                setError('Failed to load dashboard data');
+            } catch {
+                setError('Unable to load data. Please try again.');
             } finally {
                 setLoading(false);
             }
-        };
-
+        }
         fetchData();
     }, [token]);
 
-    const handleDeleteShop = async (shopId) => {
-        if (!window.confirm('Are you sure to delete this shop and all its products?')) return;
-
+    const handleDeleteShop = async (id) => {
+        if (!window.confirm('Delete this shop and all products?')) return;
         try {
-            await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/shops/${shopId}`, {
-                headers: { Authorization: `Bearer ${token}` }
+            await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/shops/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
             });
-
-            const [shopRes, productRes] = await Promise.all([
-                axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/shops/vendor`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                }),
-                axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/vendors`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-            ]);
-            setShops(shopRes.data);
-            setProducts(productRes.data);
-        } catch (err) {
-            console.error('Delete shop error:', err);
+            setShops(shops.filter((shop) => shop._id !== id));
+            setProducts(products.filter((product) => product.shopId._id !== id));
+        } catch {
             alert('Failed to delete shop.');
         }
     };
 
-    const handleDeleteProduct = async (productId) => {
-        if (!window.confirm('Are you sure to delete this product?')) return;
-
+    const handleDeleteProduct = async (id) => {
+        if (!window.confirm('Delete this product?')) return;
         try {
-            await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/products/${productId}`, {
-                headers: { Authorization: `Bearer ${token}` }
+            await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/products/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
             });
-            const productRes = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products/vendors`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setProducts(productRes.data);
-        } catch (err) {
-            console.error('Delete product error:', err);
+            setProducts(products.filter((product) => product._id !== id));
+        } catch {
             alert('Failed to delete product.');
         }
     };
 
-    const groupedProducts = {};
-    products.forEach(product => {
-        const shopId = product.shopId._id;
-        if (!groupedProducts[shopId]) groupedProducts[shopId] = [];
-        groupedProducts[shopId].push(product);
-    });
-
     if (loading)
         return (
-            <main className="loading-container" aria-busy="true" aria-label="Loading vendor dashboard">
-                <div className="spinner"></div>
-                <p>Loading Vendor Dashboard...</p>
+            <main className="loading" aria-busy="true" aria-label="Loading vendor dashboard">
+                <p>Loading Dashboard...</p>
+            </main>
+        );
+    if (error)
+        return (
+            <main className="error" role="alert">
+                <p>{error}</p>
             </main>
         );
 
-    if (error)
-        return (
-            <main className="error-container" role="alert" aria-live="assertive">
-                <p>{error}</p>
-                <button className="retry-btn" onClick={() => window.location.reload()}>
-                    Retry
-                </button>
-            </main>
-        );
+    const groupedProducts = products.reduce((acc, product) => {
+        const shopId = product.shopId._id;
+        acc[shopId] = acc[shopId] || [];
+        acc[shopId].push(product);
+        return acc;
+    }, {});
 
     return (
         <main className="vendor-dashboard" role="main">
-            <header className="dashboard-header" tabIndex={-1}>
-                <h1 className="dashboard-title">Vendor Dashboard</h1>
-                <p className="welcome-message">
-                    Welcome, <strong>{user.user.name}</strong> 👋
-                </p>
+            <header className="header">
+                <h1>Welcome, <strong>{user.user.name}</strong></h1>
             </header>
 
-            <section className="dashboard-stats" aria-label="Your statistics overview">
-                <article className="stat-card stat-shops" tabIndex={0}>
-                    <h2 className="stat-value">{stats.totalShops}</h2>
-                    <p className="stat-label">Total Shops</p>
-                </article>
-                <article className="stat-card stat-products" tabIndex={0}>
-                    <h2 className="stat-value">{stats.totalProducts}</h2>
-                    <p className="stat-label">Total Products</p>
-                </article>
-                <article className="stat-card stat-orders" tabIndex={0}>
-                    <h2 className="stat-value">{stats.totalOrders}</h2>
-                    <p className="stat-label">Total Orders</p>
-                </article>
+            <section className="stats">
+                <div className="stat-card">
+                    <FaStore size={32} color="#2563eb" />
+                    <p className="stat-value">{stats.totalShops}</p>
+                    <p className="stat-label">Shops</p>
+                </div>
+                <div className="stat-card">
+                    <FaBoxOpen size={32} color="#2563eb" />
+                    <p className="stat-value">{stats.totalProducts}</p>
+                    <p className="stat-label">Products</p>
+                </div>
+                <div className="stat-card">
+                    <FaShoppingCart size={32} color="#2563eb" />
+                    <p className="stat-value">{stats.totalOrders}</p>
+                    <p className="stat-label">Orders</p>
+                </div>
             </section>
 
-            <section className="shops-section" aria-label="Your shops">
-                <h2 className="section-heading">Your Shops</h2>
+            <section className="shops-list">
+                <h2>Your Shops</h2>
                 {shops.length === 0 ? (
-                    <article className="empty-state" aria-live="polite" tabIndex={0}>
-                        <p>You have not added any shops yet.</p>
-                    </article>
+                    <p className="empty">No shops added yet.</p>
                 ) : (
-                    shops.map(shop => (
-                        <article key={shop._id} className="shop-card" tabIndex={-1}>
-                            <header className="shop-header">
-                                <h3 className="shop-name">{shop.name}</h3>
+                    shops.map((shop) => (
+                        <article className="shop-card" key={shop._id} tabIndex={0}>
+                            <div className="shop-header">
+                                <h3>{shop.name}</h3>
                                 <button
-                                    className="delete-btn"
                                     onClick={() => handleDeleteShop(shop._id)}
-                                    aria-label={`Delete shop named ${shop.name}`}
+                                    aria-label={`Delete shop ${shop.name}`}
+                                    className="btn-danger"
                                 >
-                                    Delete Shop
+                                    <FaTrash />
                                 </button>
-                            </header>
-                            <p className="shop-description">{shop.description}</p>
-                            <p className="shop-location">
-                                <strong>Location:</strong> {shop.location}
-                            </p>
+                            </div>
+                            <p className="shop-desc">{shop.description}</p>
+                            <p className="shop-location"><strong>Location:</strong> {shop.location}</p>
 
-                            <section className="shop-products" aria-label={`Products in ${shop.name}`}>
-                                <h4 className="products-heading">Products in {shop.name}</h4>
+                            <div className="products-list">
+                                <h4>Products</h4>
                                 {(groupedProducts[shop._id] || []).length === 0 ? (
-                                    <p className="no-products" tabIndex={0}>
-                                        No products added yet.
-                                    </p>
+                                    <p className="empty">No products found.</p>
                                 ) : (
-                                    <ul className="products-list">
-                                        {groupedProducts[shop._id].map(product => (
-                                            <li key={product._id} className="product-item" tabIndex={-1}>
-                                                <div className="product-details">
-                                                    <strong className="product-name">{product.name}</strong>
-                                                    <p className="product-description">{product.description}</p>
-                                                    <p className="product-price">Price: ₹{product.price.toFixed(2)}</p>
-                                                </div>
-                                                <div className="product-actions">
-                                                    <a
-                                                        href={`/edit-product/${product._id}`}
-                                                        className="edit-btn"
-                                                        aria-label={`Edit product ${product.name}`}
-                                                    >
-                                                        ✏️ Edit
-                                                    </a>
-                                                    <button
-                                                        className="delete-btn small"
-                                                        onClick={() => handleDeleteProduct(product._id)}
-                                                        aria-label={`Delete product ${product.name}`}
-                                                    >
-                                                        🗑️ Delete
-                                                    </button>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
+                                    groupedProducts[shop._id].map((prod) => (
+                                        <div className="product-card" key={prod._id} tabIndex={0}>
+                                            <div className="product-info">
+                                                <p className="prod-name">{prod.name}</p>
+                                                <p className="prod-price">₹{prod.price.toFixed(2)}</p>
+                                            </div>
+                                            <div className="product-actions">
+                                                <a href={`/edit-product/${prod._id}`} className="btn-primary" aria-label={`Edit ${prod.name}`}>
+                                                    <FaEdit />
+                                                </a>
+                                                <button
+                                                    onClick={() => handleDeleteProduct(prod._id)}
+                                                    className="btn-danger"
+                                                    aria-label={`Delete ${prod.name}`}
+                                                >
+                                                    <FaTrash />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
                                 )}
-                            </section>
+                            </div>
                         </article>
                     ))
                 )}
