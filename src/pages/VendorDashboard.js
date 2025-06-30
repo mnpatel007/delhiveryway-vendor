@@ -1,12 +1,11 @@
+// /pages/VendorDashboard.js
 import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
 import './VendorDashboard.css';
 
 const VendorDashboard = () => {
-    const { user, logout } = useContext(AuthContext);
-    const navigate = useNavigate();
+    const { user } = useContext(AuthContext);
 
     const [shops, setShops] = useState([]);
     const [products, setProducts] = useState([]);
@@ -112,16 +111,11 @@ const VendorDashboard = () => {
             <div className="shops-section">
                 <div className="section-header">
                     <h2>Your Shops</h2>
-                    <div className="section-actions">
-                        <Link to="/add-shop" className="action-btn">+ Add New Shop</Link>
-                        <Link to="/vendor-orders" className="action-btn">View Orders</Link>
-                    </div>
                 </div>
 
                 {shops.length === 0 ? (
                     <div className="empty-state">
                         <p>No shops added yet.</p>
-                        <Link to="/add-shop" className="cta-btn">Create Your First Shop</Link>
                     </div>
                 ) : (
                     shops.map(shop => (
@@ -135,7 +129,6 @@ const VendorDashboard = () => {
                             <div className="shop-products">
                                 <div className="products-header">
                                     <h4>Products in {shop.name}</h4>
-                                    <Link to="/add-product" className="action-btn">+ Add Product</Link>
                                 </div>
                                 {(groupedProducts[shop._id] || []).length === 0 ? (
                                     <p className="no-products">No products added yet.</p>
@@ -148,7 +141,7 @@ const VendorDashboard = () => {
                                                 </div>
                                                 <div className="product-actions">
                                                     <button onClick={() => handleDeleteProduct(product._id)} className="delete-btn small">🗑️ Delete</button>
-                                                    <Link to={`/edit-product/${product._id}`} className="edit-btn">✏️ Edit</Link>
+                                                    <a href={`/edit-product/${product._id}`} className="edit-btn">✏️ Edit</a>
                                                 </div>
                                             </li>
                                         ))}

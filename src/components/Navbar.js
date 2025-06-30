@@ -52,6 +52,11 @@ const Navbar = () => {
                                 </NavLink>
                             </li>
                             <li>
+                                <NavLink to="/vendor-orders" className="nav-item" activeclassname="active" onClick={() => setMenuOpen(false)}>
+                                    View Orders
+                                </NavLink>
+                            </li>
+                            <li>
                                 <button className="nav-logout-btn" onClick={() => { handleLogout(); setMenuOpen(false); }}>
                                     Logout
                                 </button>
