@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { VendorOrderProvider, VendorOrderContext } from './context/VendorOrderContext';
 import axios from 'axios';
-import './pages/VendorDashboard.css';
+import './GlobalOrderModal.css';
 
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
@@ -69,12 +69,16 @@ const GlobalOrderModal = () => {
     }
 
     try {
-      await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}`, {
-        status,
-        reason
-      }, {
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
+      await axios.put(
+        `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}`,
+        {
+          status,
+          reason,
+        },
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
 
       clearOrder();
     } catch (err) {
@@ -86,17 +90,25 @@ const GlobalOrderModal = () => {
 
   return (
     <div className="persistent-order-modal">
-      <div className="persistent-modal-content">
-        <h3>🆕 New Order Alert</h3>
-        <p><strong>Delivery Address:</strong> {newOrder.address}</p>
+      <div className="persistent-modal-content" role="alertdialog" aria-modal="true" aria-labelledby="order-alert-title">
+        <h3 id="order-alert-title">🆕 New Order Alert</h3>
+        <p>
+          <strong>Delivery Address:</strong> {newOrder.address}
+        </p>
         <ul>
           {newOrder.items.map((item, idx) => (
-            <li key={idx}>{item.shopName} - {item.name} × {item.quantity}</li>
+            <li key={idx}>
+              {item.shopName} - {item.name} × {item.quantity}
+            </li>
           ))}
         </ul>
         <div className="persistent-modal-actions">
-          <button onClick={() => handleAction('preparing')} className="accept-btn">✅ Accept</button>
-          <button onClick={() => handleAction('cancelled')} className="reject-btn">❌ Reject</button>
+          <button onClick={() => handleAction('preparing')} className="accept-btn">
+            ✅ Accept
+          </button>
+          <button onClick={() => handleAction('cancelled')} className="reject-btn">
+            ❌ Reject
+          </button>
         </div>
       </div>
     </div>
@@ -106,13 +118,48 @@ const GlobalOrderModal = () => {
 // 🛣️ All routes
 const AppRoutes = () => (
   <Routes>
-    <Route path="/" element={<PrivateRoute><VendorDashboard /></PrivateRoute>} />
+    <Route
+      path="/"
+      element={
+        <PrivateRoute>
+          <VendorDashboard />
+        </PrivateRoute>
+      }
+    />
     <Route path="/login" element={<LoginPage />} />
     <Route path="/signup" element={<SignupPage />} />
-    <Route path="/add-shop" element={<PrivateRoute><AddShopPage /></PrivateRoute>} />
-    <Route path="/add-product" element={<PrivateRoute><AddProductPage /></PrivateRoute>} />
-    <Route path="/edit-product/:id" element={<PrivateRoute><EditProductPage /></PrivateRoute>} />
-    <Route path="/vendor-orders" element={<PrivateRoute><VendorOrders /></PrivateRoute>} />
+    <Route
+      path="/add-shop"
+      element={
+        <PrivateRoute>
+          <AddShopPage />
+        </PrivateRoute>
+      }
+    />
+    <Route
+      path="/add-product"
+      element={
+        <PrivateRoute>
+          <AddProductPage />
+        </PrivateRoute>
+      }
+    />
+    <Route
+      path="/edit-product/:id"
+      element={
+        <PrivateRoute>
+          <EditProductPage />
+        </PrivateRoute>
+      }
+    />
+    <Route
+      path="/vendor-orders"
+      element={
+        <PrivateRoute>
+          <VendorOrders />
+        </PrivateRoute>
+      }
+    />
   </Routes>
 );
 
