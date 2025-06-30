@@ -3,7 +3,11 @@ import io from 'socket.io-client';
 
 export const VendorOrderContext = createContext();
 
-const socket = io('https://delhiveryway-backend-1.onrender.com');
+const socket = io('https://delhiveryway-backend-1.onrender.com', {
+    withCredentials: true,
+    transports: ['websocket', 'polling']
+});
+
 
 export const VendorOrderProvider = ({ vendorId, children }) => {
     const [newOrder, setNewOrder] = useState(() => {
