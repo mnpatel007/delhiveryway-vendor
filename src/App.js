@@ -38,7 +38,7 @@ const GlobalOrderModal = () => {
   const { user } = useContext(AuthContext);
 
   const playAlertSound = () => {
-    const audio = new Audio('./public/alert.mp3');
+    const audio = new Audio('/alert.mp3');
     audio.volume = 1.0;
     const playPromise = audio.play();
     if (playPromise !== undefined) {
