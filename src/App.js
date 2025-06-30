@@ -14,20 +14,31 @@ import Navbar from './components/Navbar';
 import EditProductPage from './pages/EditProductPage';
 import VendorOrders from './pages/VendorOrders';
 
-// 🔐 Private route wrapper for vendors
+// 🔐 Protect vendor-only routes
 const PrivateRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
   return user && user.user.role === 'vendor' ? children : <Navigate to="/login" />;
 };
 
-// 🔔 Global order modal shown on all vendor pages
+// 🔁 Hide navbar on login/signup
+const Layout = ({ children }) => {
+  const location = useLocation();
+  const hideNavbar = location.pathname === '/login' || location.pathname === '/signup';
+  return (
+    <>
+      {!hideNavbar && <Navbar />}
+      {children}
+    </>
+  );
+};
+
+// 🚨 New order modal (global vendor popup)
 const GlobalOrderModal = () => {
   const { newOrder, clearOrder } = useContext(VendorOrderContext);
   const { user } = useContext(AuthContext);
 
-  // 🔊 Play sound on order alert
   const playAlertSound = () => {
-    const audio = new Audio('/alert.mp3');
+    const audio = new Audio('./public/alert.mp3');
     audio.volume = 1.0;
     const playPromise = audio.play();
     if (playPromise !== undefined) {
@@ -92,20 +103,7 @@ const GlobalOrderModal = () => {
   );
 };
 
-// 🧭 Layout wrapper to conditionally show Navbar
-const Layout = ({ children }) => {
-  const location = useLocation();
-  const hideNavbar = location.pathname === '/login' || location.pathname === '/signup';
-
-  return (
-    <>
-      {!hideNavbar && <Navbar />}
-      {children}
-    </>
-  );
-};
-
-// 📦 App routes (wrapped inside Layout)
+// 🛣️ All routes
 const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<PrivateRoute><VendorDashboard /></PrivateRoute>} />
@@ -118,26 +116,33 @@ const AppRoutes = () => (
   </Routes>
 );
 
-// 🎯 Main App
-function App() {
+// ✅ Wrapper used inside <AuthProvider>
+function WrappedApp() {
   const { user } = useContext(AuthContext);
 
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        {user?.user?.role === 'vendor' ? (
-          <VendorOrderProvider vendorId={user.user._id}>
-            <GlobalOrderModal />
-            <Layout>
-              <AppRoutes />
-            </Layout>
-          </VendorOrderProvider>
-        ) : (
+    <BrowserRouter>
+      {user?.user?.role === 'vendor' ? (
+        <VendorOrderProvider vendorId={user.user._id}>
+          <GlobalOrderModal />
           <Layout>
             <AppRoutes />
           </Layout>
-        )}
-      </BrowserRouter>
+        </VendorOrderProvider>
+      ) : (
+        <Layout>
+          <AppRoutes />
+        </Layout>
+      )}
+    </BrowserRouter>
+  );
+}
+
+// ✅ Root App (with AuthProvider)
+function App() {
+  return (
+    <AuthProvider>
+      <WrappedApp />
     </AuthProvider>
   );
 }
