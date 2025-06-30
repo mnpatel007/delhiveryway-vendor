@@ -18,7 +18,7 @@ const Navbar = () => {
     return (
         <nav className="navbar">
             <div className="navbar-inner">
-                <Link to="/" className="logo" aria-label="ShopEase Homepage">
+                <Link to="/" className="logo" aria-label="DelhiveryWay">
                     <span className="logo-glow">ShopEase</span>
                 </Link>
 
@@ -41,11 +41,6 @@ const Navbar = () => {
                     </li>
                     {user && (
                         <>
-                            <li>
-                                <NavLink to="/dashboard" className="nav-item" activeclassname="active" onClick={() => setMenuOpen(false)}>
-                                    Dashboard
-                                </NavLink>
-                            </li>
                             <li>
                                 <NavLink to="/add-shop" className="nav-item" activeclassname="active" onClick={() => setMenuOpen(false)}>
                                     Add Shop
