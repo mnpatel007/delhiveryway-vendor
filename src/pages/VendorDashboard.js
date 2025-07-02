@@ -86,9 +86,11 @@ const VendorDashboard = () => {
 
     const groupedProducts = {};
     products.forEach(product => {
-        const shopId = typeof product.shopId === 'object' ? product.shopId._id : product.shopId;
-        if (!groupedProducts[shopId]) groupedProducts[shopId] = [];
-        groupedProducts[shopId].push(product);
+        const shopIdStr = product.shopId?._id?.toString() || product.shopId?.toString();
+        if (!shopIdStr) return;
+        if (!groupedProducts[shopIdStr]) groupedProducts[shopIdStr] = [];
+        groupedProducts[shopIdStr].push(product);
+
     });
 
 
