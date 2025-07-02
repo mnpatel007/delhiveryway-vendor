@@ -75,11 +75,24 @@ const GlobalOrderModal = () => {
           headers: { Authorization: `Bearer ${user.token}` },
         }
       );
+
+      // ✅ Emit to the correct customer using Socket.IO
+      socket.emit('vendorConfirmedOrder', {
+        orderId: newOrder.orderId,
+        address: newOrder.address,
+        items: editedItems.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity
+        }))
+      });
+
       clearOrder();
     } catch (err) {
+      console.error('❌ Error confirming final order:', err.message);
       alert('❌ Failed to confirm rehearsal order');
     }
   };
+
 
   if (!newOrder || editedItems.length === 0) return null;
 
