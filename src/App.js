@@ -46,8 +46,14 @@ const GlobalOrderModal = () => {
 
   useEffect(() => {
     if (newOrder?.items) {
-      setEditedItems([...newOrder.items]);
-      setOriginalItems([...newOrder.items]);
+      const itemsWithProductId = newOrder.items.map(item => ({
+        ...item,
+        productId: item.product?._id || item.productId // support both formats
+      }));
+
+      setEditedItems(itemsWithProductId);
+      setOriginalItems(itemsWithProductId);
+
     }
   }, [newOrder]);
 
