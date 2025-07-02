@@ -37,9 +37,7 @@ const GlobalOrderModal = () => {
   const { newOrder, clearOrder } = useContext(VendorOrderContext);
   const { user } = useContext(AuthContext);
   const [editedItems, setEditedItems] = useState([]);
-  const [originalItems, setOriginalItems] = useState([]); // ✅ Add this
-
-
+  const [originalItems, setOriginalItems] = useState([]);
 
   useEffect(() => {
     if (newOrder?.items) {
@@ -50,20 +48,22 @@ const GlobalOrderModal = () => {
 
   const handleQtyChange = (index, value) => {
     const updated = [...editedItems];
-    const inputQty = parseInt(value);
-    const maxQty = originalItems[index]?.quantity || 1;
+    const originalQty = originalItems[index]?.quantity || 1;
+    const qty = parseInt(value);
 
-    if (!isNaN(inputQty) && inputQty > 0 && inputQty <= maxQty) {
-      updated[index].quantity = inputQty;
+    if (!isNaN(qty) && qty >= 0 && qty <= originalQty) {
+      updated[index].quantity = qty;
       setEditedItems(updated);
     }
   };
-
 
   const handleRemove = (index) => {
     const updated = [...editedItems];
     updated.splice(index, 1);
     setEditedItems(updated);
+    const originalCopy = [...originalItems];
+    originalCopy.splice(index, 1);
+    setOriginalItems(originalCopy);
   };
 
   const handleConfirm = async () => {
@@ -81,75 +81,65 @@ const GlobalOrderModal = () => {
     }
   };
 
-  const handleReject = () => {
-    alert('Rehearsal orders cannot be rejected — only finalized.');
-  };
-
-  if (!newOrder) return null;
+  if (!newOrder || editedItems.length === 0) return null;
 
   return (
     <div className="persistent-order-modal">
       <div className="persistent-modal-content" role="alertdialog">
         <h3>📝 Rehearsal Order Review</h3>
-        <p>
-          <strong>Delivery Address:</strong> {newOrder.address}
-        </p>
+        <p><strong>Delivery Address:</strong> {newOrder.address}</p>
 
-        {editedItems.length === 0 ? (
-          <p>No items left in this order.</p>
-        ) : (
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {editedItems.map((item, index) => (
-              <li key={index} style={{ marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                  <div>
-                    <strong>{item.shopName}</strong><br />
-                    {item.name}
-                  </div>
-
-                  <span>₹{item.price}</span>
-                  <span>×</span>
-
-                  <input
-                    type="number"
-                    min="0"
-                    max={newOrder.items[index].quantity}
-                    value={item.quantity}
-                    onChange={(e) => handleQtyChange(index, e.target.value)}
-                    style={{
-                      width: '60px',
-                      textAlign: 'center',
-                      borderRadius: '4px',
-                      border: '1px solid #ccc',
-                      padding: '4px'
-                    }}
-                  />
-                  <span>= ₹{(item.price * item.quantity).toFixed(2)}</span>
-
-                  <button
-                    onClick={() => handleRemove(index)}
-                    aria-label="Remove item"
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '18px'
-                    }}
-                  >
-                    🗑️
-                  </button>
-
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          {editedItems.map((item, index) => (
+            <li key={index} style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <div>
+                  <strong>{item.shopName}</strong><br />
+                  {item.name}
                 </div>
-              </li>
-            ))}
-          </ul>
-        )}
+
+                <span>₹{item.price}</span>
+                <span>×</span>
+
+                <input
+                  type="number"
+                  min="0"
+                  max={originalItems[index]?.quantity || 1}
+                  value={item.quantity}
+                  onChange={(e) => handleQtyChange(index, e.target.value)}
+                  style={{
+                    width: '60px',
+                    textAlign: 'center',
+                    borderRadius: '4px',
+                    border: '1px solid #ccc',
+                    padding: '4px'
+                  }}
+                />
+
+                <span>= ₹{(item.price * item.quantity).toFixed(2)}</span>
+                <button
+                  onClick={() => handleRemove(index)}
+                  aria-label="Remove item"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '18px'
+                  }}
+                >
+                  🗑️
+                </button>
+
+              </div>
+            </li>
+          ))}
+        </ul>
 
         <div className="persistent-modal-actions">
           <button onClick={handleConfirm} className="accept-btn" disabled={editedItems.length === 0}>
             ✅ Confirm Final Order
           </button>
-          <button onClick={handleReject} className="reject-btn">
+          <button onClick={() => clearOrder()} className="reject-btn">
             ❌ Cancel
           </button>
         </div>
