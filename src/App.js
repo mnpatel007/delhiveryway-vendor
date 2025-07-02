@@ -41,17 +41,21 @@ const GlobalOrderModal = () => {
   useEffect(() => {
     if (newOrder?.items) {
       setEditedItems([...newOrder.items]);
+      setOriginalItems([...newOrder.items]);
     }
   }, [newOrder]);
 
   const handleQtyChange = (index, value) => {
     const updated = [...editedItems];
-    const qty = parseInt(value);
-    if (!isNaN(qty) && qty > 0) {
-      updated[index].quantity = qty;
+    const inputQty = parseInt(value);
+    const maxQty = originalItems[index]?.quantity || 1;
+
+    if (!isNaN(inputQty) && inputQty > 0 && inputQty <= maxQty) {
+      updated[index].quantity = inputQty;
       setEditedItems(updated);
     }
   };
+
 
   const handleRemove = (index) => {
     const updated = [...editedItems];
