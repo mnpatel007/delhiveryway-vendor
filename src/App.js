@@ -4,6 +4,8 @@ import { AuthProvider, AuthContext } from './context/AuthContext';
 import { VendorOrderProvider, VendorOrderContext } from './context/VendorOrderContext';
 import axios from 'axios';
 import './GlobalOrderModal.css';
+import io from 'socket.io-client';
+
 
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
@@ -31,6 +33,9 @@ const Layout = ({ children }) => {
     </>
   );
 };
+
+
+const socket = io(process.env.REACT_APP_BACKEND_URL);
 
 // 🚨 New order modal (global vendor popup)
 const GlobalOrderModal = () => {
