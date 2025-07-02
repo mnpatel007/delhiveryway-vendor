@@ -91,33 +91,49 @@ const GlobalOrderModal = () => {
         {editedItems.length === 0 ? (
           <p>No items left in this order.</p>
         ) : (
-          <ul>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
             {editedItems.map((item, index) => (
-              <li key={index}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>
-                    {item.shopName}<br />
+              <li key={index} style={{ marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <div>
+                    <strong>{item.shopName}</strong><br />
                     {item.name}
-                  </span>
+                  </div>
 
                   <span>₹{item.price}</span>
-
                   <span>×</span>
 
                   <input
                     type="number"
-                    min="1"
-                    max={item.quantity}
+                    min="0"
+                    max={newOrder.items[index].quantity}
                     value={item.quantity}
                     onChange={(e) => handleQtyChange(index, e.target.value)}
-                    style={{ width: '50px' }}
+                    style={{
+                      width: '60px',
+                      textAlign: 'center',
+                      borderRadius: '4px',
+                      border: '1px solid #ccc',
+                      padding: '4px'
+                    }}
                   />
-
                   <span>= ₹{(item.price * item.quantity).toFixed(2)}</span>
+
+                  <button
+                    onClick={() => handleRemove(index)}
+                    aria-label="Remove item"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '18px'
+                    }}
+                  >
+                    🗑️
+                  </button>
+
                 </div>
               </li>
-
-
             ))}
           </ul>
         )}
