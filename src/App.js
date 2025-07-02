@@ -94,15 +94,17 @@ const GlobalOrderModal = () => {
           <ul>
             {editedItems.map((item, index) => (
               <li key={index}>
-                {item.shopName} - {item.name} ×
+                {item.shopName} - {item.name} (₹{item.price}) ×
                 <input
                   type="number"
                   value={item.quantity}
                   onChange={(e) => handleQtyChange(index, e.target.value)}
                   style={{ width: 50, margin: '0 8px' }}
                 />
+                = ₹{(item.price * item.quantity).toFixed(2)}
                 <button onClick={() => handleRemove(index)}>🗑️</button>
               </li>
+
             ))}
           </ul>
         )}
