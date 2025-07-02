@@ -36,84 +36,90 @@ const Layout = ({ children }) => {
 const GlobalOrderModal = () => {
   const { newOrder, clearOrder } = useContext(VendorOrderContext);
   const { user } = useContext(AuthContext);
+  const [editedItems, setEditedItems] = useState([]);
 
-  const playAlertSound = () => {
-    const audio = new Audio('/alert.mp3');
-    audio.volume = 1.0;
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(() => {
-        const resume = () => {
-          audio.play();
-          document.removeEventListener('click', resume);
-        };
-        document.addEventListener('click', resume);
-      });
+  useEffect(() => {
+    if (newOrder?.items) {
+      setEditedItems([...newOrder.items]);
+    }
+  }, [newOrder]);
+
+  const handleQtyChange = (index, value) => {
+    const updated = [...editedItems];
+    const qty = parseInt(value);
+    if (!isNaN(qty) && qty > 0) {
+      updated[index].quantity = qty;
+      setEditedItems(updated);
     }
   };
 
-  useEffect(() => {
-    if (newOrder) playAlertSound();
-  }, [newOrder]);
+  const handleRemove = (index) => {
+    const updated = [...editedItems];
+    updated.splice(index, 1);
+    setEditedItems(updated);
+  };
 
-  const handleAction = async (status) => {
-    if (!newOrder) return;
-
-    let reason = null;
-    if (status === 'cancelled') {
-      reason = prompt('Enter reason for rejection:');
-      if (!reason || reason.trim() === '') {
-        alert('❌ You must provide a reason to reject the order.');
-        return;
-      }
-    }
-
+  const handleConfirm = async () => {
     try {
       await axios.put(
-        `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}`,
-        {
-          status,
-          reason,
-        },
+        `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}/confirm`,
+        { items: editedItems },
         {
           headers: { Authorization: `Bearer ${user.token}` },
         }
       );
-
       clearOrder();
     } catch (err) {
-      alert('Failed to process order.');
+      alert('❌ Failed to confirm rehearsal order');
     }
+  };
+
+  const handleReject = () => {
+    alert('Rehearsal orders cannot be rejected — only finalized.');
   };
 
   if (!newOrder) return null;
 
   return (
     <div className="persistent-order-modal">
-      <div className="persistent-modal-content" role="alertdialog" aria-modal="true" aria-labelledby="order-alert-title">
-        <h3 id="order-alert-title">🆕 New Order Alert</h3>
+      <div className="persistent-modal-content" role="alertdialog">
+        <h3>📝 Rehearsal Order Review</h3>
         <p>
           <strong>Delivery Address:</strong> {newOrder.address}
         </p>
-        <ul>
-          {newOrder.items.map((item, idx) => (
-            <li key={idx}>
-              {item.shopName} - {item.name} × {item.quantity}
-            </li>
-          ))}
-        </ul>
+
+        {editedItems.length === 0 ? (
+          <p>No items left in this order.</p>
+        ) : (
+          <ul>
+            {editedItems.map((item, index) => (
+              <li key={index}>
+                {item.shopName} - {item.name} ×
+                <input
+                  type="number"
+                  value={item.quantity}
+                  onChange={(e) => handleQtyChange(index, e.target.value)}
+                  style={{ width: 50, margin: '0 8px' }}
+                />
+                <button onClick={() => handleRemove(index)}>🗑️</button>
+              </li>
+            ))}
+          </ul>
+        )}
+
         <div className="persistent-modal-actions">
-          <button onClick={() => handleAction('preparing')} className="accept-btn">
-            ✅ Accept
+          <button onClick={handleConfirm} className="accept-btn" disabled={editedItems.length === 0}>
+            ✅ Confirm Final Order
           </button>
-          <button onClick={() => handleAction('cancelled')} className="reject-btn">
-            ❌ Reject
+          <button onClick={handleReject} className="reject-btn">
+            ❌ Cancel
           </button>
         </div>
       </div>
     </div>
   );
 };
+
 
 // 🛣️ All routes
 const AppRoutes = () => (

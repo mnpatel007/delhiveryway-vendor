@@ -36,22 +36,31 @@ export const VendorOrderProvider = ({ vendorId, children }) => {
         }
 
         socket.on('newOrder', async (orderData) => {
-            try {
-                const res = await axios.get(
-                    `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${orderData.orderId}/status`
-                );
+            const res = await axios.get(
+                `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${orderData.orderId}/status`
+            );
+            if (res.data.status !== 'pending') return;
 
-                if (res.data.status !== 'pending') return; // Order already handled
-
-                playAlertSound();
-                localStorage.setItem('persistentVendorOrder', JSON.stringify(orderData));
-                setNewOrder(orderData);
-            } catch (err) {
-                console.error('Failed to verify order status before alert:', err);
-            }
+            playAlertSound();
+            localStorage.setItem('persistentVendorOrder', JSON.stringify(orderData));
+            setNewOrder(orderData);
         });
 
-        return () => socket.off('newOrder');
+        socket.on('newRehearsalOrder', async (orderData) => {
+            const res = await axios.get(
+                `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${orderData.orderId}/status`
+            );
+            if (res.data.status !== 'pending_vendor') return;
+
+            playAlertSound();
+            localStorage.setItem('persistentVendorOrder', JSON.stringify(orderData));
+            setNewOrder(orderData);
+        });
+
+        return () => {
+            socket.off('newOrder');
+            socket.off('newRehearsalOrder');
+        };
     }, [vendorId]);
 
     const clearOrder = () => {
