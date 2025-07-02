@@ -37,6 +37,9 @@ const GlobalOrderModal = () => {
   const { newOrder, clearOrder } = useContext(VendorOrderContext);
   const { user } = useContext(AuthContext);
   const [editedItems, setEditedItems] = useState([]);
+  const [originalItems, setOriginalItems] = useState([]); // ✅ Add this
+
+
 
   useEffect(() => {
     if (newOrder?.items) {
