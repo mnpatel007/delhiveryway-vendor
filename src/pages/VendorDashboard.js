@@ -84,17 +84,20 @@ const VendorDashboard = () => {
         }
     };
 
-    const groupedProducts = products.reduce((acc, product) => {
-        const shopId = product.shopId;
-        const shopKey = typeof shopId === 'object' && shopId !== null ? shopId._id : shopId;
+    const groupedProducts = {};
 
-        if (!shopKey) return acc;
+    products.forEach((product) => {
+        // Get shop ID safely from populated or unpopulated product
+        const shopId =
+            typeof product.shopId === 'object' && product.shopId !== null
+                ? product.shopId._id?.toString()
+                : product.shopId?.toString();
 
-        const key = shopKey.toString();
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(product);
-        return acc;
-    }, {});
+        if (!shopId) return;
+
+        if (!groupedProducts[shopId]) groupedProducts[shopId] = [];
+        groupedProducts[shopId].push(product);
+    });
 
 
 
@@ -115,6 +118,8 @@ const VendorDashboard = () => {
                 </button>
             </main>
         );
+    console.log('🧪 groupedProducts:', groupedProducts);
+    console.log('📦 Products:', products);
 
     return (
         <main className="vendor-dashboard" role="main">
