@@ -15,13 +15,11 @@ import Navbar from './components/Navbar';
 import EditProductPage from './pages/EditProductPage';
 import VendorOrders from './pages/VendorOrders';
 
-// 🔐 Protect vendor-only routes
 const PrivateRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
   return user && user.user.role === 'vendor' ? children : <Navigate to="/login" />;
 };
 
-// 🔁 Hide navbar on login/signup
 const Layout = ({ children }) => {
   const location = useLocation();
   const hideNavbar = location.pathname === '/login' || location.pathname === '/signup';
@@ -35,7 +33,7 @@ const Layout = ({ children }) => {
 
 const socket = io(process.env.REACT_APP_BACKEND_URL);
 
-// 🚨 New order modal (global vendor popup)
+// 🔔 Global Order Modal (rehearsal + staged)
 const GlobalOrderModal = () => {
   const { newOrder, setNewOrder, clearOrder } = useContext(VendorOrderContext);
   const { user } = useContext(AuthContext);
@@ -43,25 +41,25 @@ const GlobalOrderModal = () => {
   const [originalItems, setOriginalItems] = useState([]);
 
   useEffect(() => {
+    if (user?.user?.role === 'vendor') {
+      socket.emit('joinVendorRoom', user.user._id);
+    }
+
     socket.on('newOrder', (data) => {
-      setNewOrder({
-        ...data,
-        type: 'rehearsal'
-      });
+      console.log('📥 received rehearsal order', data);
+      setNewOrder({ ...data, type: 'rehearsal' });
     });
 
     socket.on('newStagedOrder', (data) => {
-      setNewOrder({
-        ...data,
-        type: 'staged'
-      });
+      console.log('📥 received staged order', data);
+      setNewOrder({ ...data, type: 'staged' });
     });
 
     return () => {
       socket.off('newOrder');
       socket.off('newStagedOrder');
     };
-  }, [setNewOrder]);
+  }, [setNewOrder, user]);
 
   useEffect(() => {
     if (newOrder?.items) {
@@ -102,24 +100,19 @@ const GlobalOrderModal = () => {
         await axios.patch(
           `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/confirm/${newOrder.orderId}`,
           {},
-          {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }
+          { headers: { Authorization: `Bearer ${user.token}` } }
         );
       } else {
         await axios.put(
           `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}/confirm`,
           { items: editedItems },
-          {
-            headers: { Authorization: `Bearer ${user.token}` },
-          }
+          { headers: { Authorization: `Bearer ${user.token}` } }
         );
       }
-
       clearOrder();
     } catch (err) {
-      console.error('❌ Error confirming order:', err.message);
-      alert('Failed to confirm order');
+      console.error('❌ Confirm failed:', err.message);
+      alert('❌ Failed to confirm order');
     }
   };
 
@@ -130,18 +123,13 @@ const GlobalOrderModal = () => {
     try {
       await axios.put(
         `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}`,
-        {
-          status: 'cancelled',
-          reason,
-        },
-        {
-          headers: { Authorization: `Bearer ${user.token}` },
-        }
+        { status: 'cancelled', reason },
+        { headers: { Authorization: `Bearer ${user.token}` } }
       );
       clearOrder();
     } catch (err) {
-      console.error('❌ Error rejecting order:', err.message);
-      alert('Failed to reject order');
+      console.error('❌ Reject failed:', err.message);
+      alert('❌ Failed to reject order');
     }
   };
 
@@ -152,7 +140,7 @@ const GlobalOrderModal = () => {
       <div className="persistent-modal-content" role="alertdialog">
         <h3>
           {newOrder.type === 'staged'
-            ? '🧾 Paid Order — Awaiting Your Confirmation'
+            ? '🧾 Paid Order — Awaiting Confirmation'
             : '📝 Rehearsal Order Review'}
         </h3>
         <p><strong>Delivery Address:</strong> {newOrder.address}</p>
@@ -212,7 +200,7 @@ const GlobalOrderModal = () => {
   );
 };
 
-// 🛣️ All routes
+// 🛣️ Routes
 const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<PrivateRoute><VendorDashboard /></PrivateRoute>} />
@@ -225,29 +213,23 @@ const AppRoutes = () => (
   </Routes>
 );
 
-// ✅ Wrapper used inside <AuthProvider>
+// ✅ Auth wrapper
 function WrappedApp() {
   const { user } = useContext(AuthContext);
-
   return (
     <BrowserRouter>
       {user?.user?.role === 'vendor' ? (
         <VendorOrderProvider vendorId={user.user._id}>
           <GlobalOrderModal />
-          <Layout>
-            <AppRoutes />
-          </Layout>
+          <Layout><AppRoutes /></Layout>
         </VendorOrderProvider>
       ) : (
-        <Layout>
-          <AppRoutes />
-        </Layout>
+        <Layout><AppRoutes /></Layout>
       )}
     </BrowserRouter>
   );
 }
 
-// ✅ Root App
 function App() {
   return (
     <AuthProvider>
