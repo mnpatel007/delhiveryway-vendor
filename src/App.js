@@ -6,7 +6,6 @@ import axios from 'axios';
 import './GlobalOrderModal.css';
 import io from 'socket.io-client';
 
-
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import VendorDashboard from './pages/VendorDashboard';
@@ -34,26 +33,46 @@ const Layout = ({ children }) => {
   );
 };
 
-
 const socket = io(process.env.REACT_APP_BACKEND_URL);
 
 // 🚨 New order modal (global vendor popup)
 const GlobalOrderModal = () => {
-  const { newOrder, clearOrder } = useContext(VendorOrderContext);
+  const { newOrder, setNewOrder, clearOrder } = useContext(VendorOrderContext);
   const { user } = useContext(AuthContext);
   const [editedItems, setEditedItems] = useState([]);
   const [originalItems, setOriginalItems] = useState([]);
 
   useEffect(() => {
+    socket.on('newOrder', (data) => {
+      setNewOrder({
+        ...data,
+        type: 'rehearsal'
+      });
+    });
+
+    socket.on('newStagedOrder', (data) => {
+      setNewOrder({
+        ...data,
+        type: 'staged'
+      });
+    });
+
+    return () => {
+      socket.off('newOrder');
+      socket.off('newStagedOrder');
+    };
+  }, [setNewOrder]);
+
+  useEffect(() => {
     if (newOrder?.items) {
       const itemsWithProductId = newOrder.items.map(item => ({
         ...item,
-        productId: item.product?._id || item.productId // support both formats
+        productId: item.product?._id || item.productId,
+        price: item.price || 0
       }));
 
       setEditedItems(itemsWithProductId);
       setOriginalItems(itemsWithProductId);
-
     }
   }, [newOrder]);
 
@@ -79,38 +98,63 @@ const GlobalOrderModal = () => {
 
   const handleConfirm = async () => {
     try {
+      if (newOrder.type === 'staged') {
+        await axios.patch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/confirm/${newOrder.orderId}`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }
+        );
+      } else {
+        await axios.put(
+          `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}/confirm`,
+          { items: editedItems },
+          {
+            headers: { Authorization: `Bearer ${user.token}` },
+          }
+        );
+      }
+
+      clearOrder();
+    } catch (err) {
+      console.error('❌ Error confirming order:', err.message);
+      alert('Failed to confirm order');
+    }
+  };
+
+  const handleReject = async () => {
+    const reason = prompt('Why are you rejecting this order?');
+    if (!reason) return;
+
+    try {
       await axios.put(
-        `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}/confirm`,
-        { items: editedItems },
+        `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}`,
+        {
+          status: 'cancelled',
+          reason,
+        },
         {
           headers: { Authorization: `Bearer ${user.token}` },
         }
       );
-
-      // ✅ Emit to the correct customer using Socket.IO
-      socket.emit('vendorConfirmedOrder', {
-        orderId: newOrder.orderId,
-        address: newOrder.address,
-        items: editedItems.map(item => ({
-          productId: item.productId,
-          quantity: item.quantity
-        }))
-      });
-
       clearOrder();
     } catch (err) {
-      console.error('❌ Error confirming final order:', err.message);
-      alert('❌ Failed to confirm rehearsal order');
+      console.error('❌ Error rejecting order:', err.message);
+      alert('Failed to reject order');
     }
   };
-
 
   if (!newOrder || editedItems.length === 0) return null;
 
   return (
     <div className="persistent-order-modal">
       <div className="persistent-modal-content" role="alertdialog">
-        <h3>📝 Rehearsal Order Review</h3>
+        <h3>
+          {newOrder.type === 'staged'
+            ? '🧾 Paid Order — Awaiting Your Confirmation'
+            : '📝 Rehearsal Order Review'}
+        </h3>
         <p><strong>Delivery Address:</strong> {newOrder.address}</p>
 
         <ul style={{ listStyle: 'none', padding: 0 }}>
@@ -121,10 +165,8 @@ const GlobalOrderModal = () => {
                   <strong>{item.shopName}</strong><br />
                   {item.name}
                 </div>
-
                 <span>₹{item.price}</span>
                 <span>×</span>
-
                 <input
                   type="number"
                   min="0"
@@ -139,7 +181,6 @@ const GlobalOrderModal = () => {
                     padding: '4px'
                   }}
                 />
-
                 <span>= ₹{(item.price * item.quantity).toFixed(2)}</span>
                 <button
                   onClick={() => handleRemove(index)}
@@ -153,7 +194,6 @@ const GlobalOrderModal = () => {
                 >
                   🗑️
                 </button>
-
               </div>
             </li>
           ))}
@@ -161,10 +201,10 @@ const GlobalOrderModal = () => {
 
         <div className="persistent-modal-actions">
           <button onClick={handleConfirm} className="accept-btn" disabled={editedItems.length === 0}>
-            ✅ Confirm Final Order
+            {newOrder.type === 'staged' ? '✅ Confirm Paid Order' : '✅ Confirm Final Order'}
           </button>
-          <button onClick={() => clearOrder()} className="reject-btn">
-            ❌ Cancel
+          <button onClick={handleReject} className="reject-btn">
+            ❌ Reject Order
           </button>
         </div>
       </div>
@@ -172,52 +212,16 @@ const GlobalOrderModal = () => {
   );
 };
 
-
 // 🛣️ All routes
 const AppRoutes = () => (
   <Routes>
-    <Route
-      path="/"
-      element={
-        <PrivateRoute>
-          <VendorDashboard />
-        </PrivateRoute>
-      }
-    />
+    <Route path="/" element={<PrivateRoute><VendorDashboard /></PrivateRoute>} />
     <Route path="/login" element={<LoginPage />} />
     <Route path="/signup" element={<SignupPage />} />
-    <Route
-      path="/add-shop"
-      element={
-        <PrivateRoute>
-          <AddShopPage />
-        </PrivateRoute>
-      }
-    />
-    <Route
-      path="/add-product"
-      element={
-        <PrivateRoute>
-          <AddProductPage />
-        </PrivateRoute>
-      }
-    />
-    <Route
-      path="/edit-product/:id"
-      element={
-        <PrivateRoute>
-          <EditProductPage />
-        </PrivateRoute>
-      }
-    />
-    <Route
-      path="/vendor-orders"
-      element={
-        <PrivateRoute>
-          <VendorOrders />
-        </PrivateRoute>
-      }
-    />
+    <Route path="/add-shop" element={<PrivateRoute><AddShopPage /></PrivateRoute>} />
+    <Route path="/add-product" element={<PrivateRoute><AddProductPage /></PrivateRoute>} />
+    <Route path="/edit-product/:id" element={<PrivateRoute><EditProductPage /></PrivateRoute>} />
+    <Route path="/vendor-orders" element={<PrivateRoute><VendorOrders /></PrivateRoute>} />
   </Routes>
 );
 
@@ -243,7 +247,7 @@ function WrappedApp() {
   );
 }
 
-// ✅ Root App (with AuthProvider)
+// ✅ Root App
 function App() {
   return (
     <AuthProvider>
