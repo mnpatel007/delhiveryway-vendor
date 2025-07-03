@@ -84,14 +84,18 @@ const VendorDashboard = () => {
         }
     };
 
-    const groupedProducts = {};
-    products.forEach(product => {
-        const shopIdStr = product.shopId?._id?.toString() || product.shopId?.toString();
-        if (!shopIdStr) return;
-        if (!groupedProducts[shopIdStr]) groupedProducts[shopIdStr] = [];
-        groupedProducts[shopIdStr].push(product);
+    const groupedProducts = products.reduce((acc, product) => {
+        const shopId = product.shopId;
+        const shopKey = typeof shopId === 'object' && shopId !== null ? shopId._id : shopId;
 
-    });
+        if (!shopKey) return acc;
+
+        const key = shopKey.toString();
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(product);
+        return acc;
+    }, {});
+
 
 
     if (loading)
