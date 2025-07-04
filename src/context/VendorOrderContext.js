@@ -57,9 +57,17 @@ export const VendorOrderProvider = ({ vendorId, children }) => {
             setNewOrder(orderData);
         });
 
+        socket.on('newStagedOrder', (orderData) => {
+            console.log('📥 [SOCKET] received newStagedOrder:', orderData);
+            playAlertSound();
+            localStorage.setItem('persistentVendorOrder', JSON.stringify(orderData));
+            setNewOrder({ ...orderData, type: 'staged' });
+        });
+
         return () => {
             socket.off('newOrder');
             socket.off('newRehearsalOrder');
+            socket.off('newStagedOrder');
         };
     }, [vendorId]);
 
@@ -69,7 +77,7 @@ export const VendorOrderProvider = ({ vendorId, children }) => {
     };
 
     return (
-        <VendorOrderContext.Provider value={{ newOrder, clearOrder }}>
+        <VendorOrderContext.Provider value={{ newOrder, setNewOrder, clearOrder }}>
             {children}
         </VendorOrderContext.Provider>
     );
