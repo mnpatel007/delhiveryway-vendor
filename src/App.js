@@ -33,7 +33,7 @@ const Layout = ({ children }) => {
 
 const socket = io(process.env.REACT_APP_BACKEND_URL);
 
-// 🔔 Global Order Modal (rehearsal + staged)
+// 🔔 Global Order Modal (rehearsal + staged) — debug-patched
 const GlobalOrderModal = () => {
   const { newOrder, setNewOrder, clearOrder } = useContext(VendorOrderContext);
   const { user } = useContext(AuthContext);
@@ -42,16 +42,19 @@ const GlobalOrderModal = () => {
 
   useEffect(() => {
     if (user?.user?.role === 'vendor') {
-      socket.emit('registerVendor', user.user._id); // ✅ fixed!
+      console.log('🧪 emitting registerVendor for', user.user._id);
+      socket.emit('registerVendor', user.user._id);
     }
 
     socket.on('newOrder', (data) => {
       console.log('📥 received rehearsal order', data);
+      alert('🛎️ Rehearsal order received!');
       setNewOrder({ ...data, type: 'rehearsal' });
     });
 
     socket.on('newStagedOrder', (data) => {
       console.log('📥 received staged order', data);
+      alert('✅ Paid order received! Showing final confirmation popup.');
       setNewOrder({ ...data, type: 'staged' });
     });
 
@@ -61,15 +64,14 @@ const GlobalOrderModal = () => {
     };
   }, [setNewOrder, user]);
 
-
   useEffect(() => {
     if (newOrder?.items) {
+      console.log('📦 Setting modal items:', newOrder.items);
       const itemsWithProductId = newOrder.items.map(item => ({
         ...item,
         productId: item.product?._id || item.productId,
         price: item.price || 0
       }));
-
       setEditedItems(itemsWithProductId);
       setOriginalItems(itemsWithProductId);
     }
@@ -79,7 +81,6 @@ const GlobalOrderModal = () => {
     const updated = [...editedItems];
     const originalQty = originalItems[index]?.quantity || 1;
     const qty = parseInt(value);
-
     if (!isNaN(qty) && qty >= 0 && qty <= originalQty) {
       updated[index].quantity = qty;
       setEditedItems(updated);
@@ -98,12 +99,14 @@ const GlobalOrderModal = () => {
   const handleConfirm = async () => {
     try {
       if (newOrder.type === 'staged') {
+        console.log('🔁 PATCH confirm for staged order', newOrder.orderId);
         await axios.patch(
           `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/confirm/${newOrder.orderId}`,
           {},
           { headers: { Authorization: `Bearer ${user.token}` } }
         );
       } else {
+        console.log('🔁 PUT confirm for rehearsal order', newOrder.orderId);
         await axios.put(
           `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}/confirm`,
           { items: editedItems },
@@ -122,6 +125,7 @@ const GlobalOrderModal = () => {
     if (!reason) return;
 
     try {
+      console.log('🔁 PUT reject for order', newOrder.orderId);
       await axios.put(
         `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}`,
         { status: 'cancelled', reason },
@@ -134,7 +138,10 @@ const GlobalOrderModal = () => {
     }
   };
 
-  if (!newOrder || editedItems.length === 0) return null;
+  if (!newOrder || editedItems.length === 0) {
+    console.log('⛔ No order or items to show modal.');
+    return null;
+  }
 
   return (
     <div className="persistent-order-modal">
@@ -200,6 +207,7 @@ const GlobalOrderModal = () => {
     </div>
   );
 };
+
 
 // 🛣️ Routes
 const AppRoutes = () => (
