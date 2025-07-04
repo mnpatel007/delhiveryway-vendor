@@ -42,7 +42,7 @@ const GlobalOrderModal = () => {
 
   useEffect(() => {
     if (user?.user?.role === 'vendor') {
-      socket.emit('joinVendorRoom', user.user._id);
+      socket.emit('registerVendor', user.user._id); // ✅ fixed!
     }
 
     socket.on('newOrder', (data) => {
@@ -60,6 +60,7 @@ const GlobalOrderModal = () => {
       socket.off('newStagedOrder');
     };
   }, [setNewOrder, user]);
+
 
   useEffect(() => {
     if (newOrder?.items) {
