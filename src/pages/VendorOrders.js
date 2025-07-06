@@ -115,7 +115,7 @@ const VendorOrders = () => {
                                 {order.status}
                             </span>
 
-                            {(order.status === 'preparing' || order.status === 'out for delivery') && (
+                            {['confirmed', 'preparing', 'out for delivery'].includes(order.status) && (
                                 <select
                                     aria-label={`Update status for order ${order._id}`}
                                     value={order.status}
@@ -123,6 +123,12 @@ const VendorOrders = () => {
                                     disabled={statusUpdating === order._id}
                                     className="status-select"
                                 >
+                                    {order.status === 'confirmed' && (
+                                        <>
+                                            <option value="confirmed">Confirmed</option>
+                                            <option value="preparing">Preparing</option>
+                                        </>
+                                    )}
                                     {order.status === 'preparing' && (
                                         <>
                                             <option value="preparing">Preparing</option>
