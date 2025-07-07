@@ -1,8 +1,8 @@
 import React, { useState, useContext } from 'react';
-import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import './VendorSignupPage.css'; // Import CSS file
+import axios from 'axios';
+import './VendorSignupPage.css'; // Use a vendor-specific or shared CSS file
 
 const VendorSignupPage = () => {
     const { login } = useContext(AuthContext);
@@ -10,38 +10,30 @@ const VendorSignupPage = () => {
         name: '',
         email: '',
         password: '',
-        confirmPassword: '',
-        shopName: '' // Added shop name for vendors
+        confirmPassword: ''
     });
     const [errors, setErrors] = useState({});
+    const [successMessage, setSuccessMessage] = useState('');
     const navigate = useNavigate();
 
-    // Handle input changes
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prevState => ({
             ...prevState,
             [name]: value
         }));
+        if (successMessage) setSuccessMessage('');
     };
 
-    // Validation function
     const validateForm = () => {
         const newErrors = {};
 
-        // Name validation
         if (!formData.name.trim()) {
             newErrors.name = 'Name is required';
         } else if (formData.name.trim().length < 2) {
             newErrors.name = 'Name must be at least 2 characters';
         }
 
-        // Shop Name validation
-        if (!formData.shopName.trim()) {
-            newErrors.shopName = 'Shop Name is required';
-        }
-
-        // Email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!formData.email.trim()) {
             newErrors.email = 'Email is required';
@@ -49,7 +41,6 @@ const VendorSignupPage = () => {
             newErrors.email = 'Invalid email format';
         }
 
-        // Password validation
         if (!formData.password) {
             newErrors.password = 'Password is required';
         } else if (formData.password.length < 8) {
@@ -58,7 +49,6 @@ const VendorSignupPage = () => {
             newErrors.password = 'Password must include uppercase, lowercase, number, and special character';
         }
 
-        // Confirm password validation
         if (formData.password !== formData.confirmPassword) {
             newErrors.confirmPassword = 'Passwords do not match';
         }
@@ -68,12 +58,9 @@ const VendorSignupPage = () => {
     };
 
     const handleSignup = async (e) => {
-        e.preventDefault(); // Prevent default form submission
+        e.preventDefault();
 
-        // Validate form
-        if (!validateForm()) {
-            return;
-        }
+        if (!validateForm()) return;
 
         try {
             const { confirmPassword, ...signupData } = formData;
@@ -82,8 +69,14 @@ const VendorSignupPage = () => {
                 role: 'vendor'
             });
 
-            login(res.data);
-            navigate('/vendor');
+            setSuccessMessage('✅ Signup successful! Please check your email to verify your account before logging in.');
+            setErrors({});
+            setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+
+            setTimeout(() => {
+                navigate('/login');
+            }, 4000);
+
         } catch (err) {
             const serverError = err.response?.data?.message || 'Signup failed';
             setErrors(prevErrors => ({
@@ -100,6 +93,10 @@ const VendorSignupPage = () => {
                     <h2 className="signup-title">Vendor Registration</h2>
                     <p className="signup-subtitle">Create your vendor account</p>
 
+                    {successMessage && (
+                        <div className="success-message">{successMessage}</div>
+                    )}
+
                     {errors.submit && (
                         <div className="error-message">{errors.submit}</div>
                     )}
@@ -115,19 +112,6 @@ const VendorSignupPage = () => {
                             onChange={handleChange}
                         />
                         {errors.name && <span className="error-text">{errors.name}</span>}
-                    </div>
-
-                    <div className="input-group">
-                        <label htmlFor="shopName">Shop Name</label>
-                        <input
-                            id="shopName"
-                            type="text"
-                            name="shopName"
-                            placeholder="Enter your shop name"
-                            value={formData.shopName}
-                            onChange={handleChange}
-                        />
-                        {errors.shopName && <span className="error-text">{errors.shopName}</span>}
                     </div>
 
                     <div className="input-group">

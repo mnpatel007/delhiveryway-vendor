@@ -2,7 +2,9 @@ import React, { useState, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import './VendorLoginPage.css'; // Import CSS file
+import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
+import './VendorLoginPage.css';
 
 const VendorLoginPage = () => {
     const { login } = useContext(AuthContext);
@@ -12,10 +14,9 @@ const VendorLoginPage = () => {
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
-        e.preventDefault(); // Prevent default form submission
-        setError(''); // Reset error state
+        e.preventDefault();
+        setError('');
 
-        // Basic validation
         if (!email || !password) {
             setError('Please enter both email and password');
             return;
@@ -33,6 +34,31 @@ const VendorLoginPage = () => {
             navigate('/');
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');
+        }
+    };
+
+    const handleGoogleLogin = async (credentialResponse) => {
+        try {
+            const decoded = jwtDecode(credentialResponse.credential);
+            const { email, name, sub } = decoded;
+
+            const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/auth/google`, {
+                email,
+                name,
+                googleId: sub,
+                role: 'vendor'
+            });
+
+            if (res.data.user.role !== 'vendor') {
+                setError('Google account is not a vendor');
+                return;
+            }
+
+            login(res.data);
+            navigate('/');
+        } catch (err) {
+            console.error('Google login error:', err);
+            setError('Google login failed');
         }
     };
 
@@ -80,6 +106,16 @@ const VendorLoginPage = () => {
                     >
                         Login
                     </button>
+
+                    <div className="google-divider">OR</div>
+
+                    <GoogleOAuthProvider clientId="117679354054-t7tsl5najnu2kab80ffls6flkau21idl.apps.googleusercontent.com">
+                        <GoogleLogin
+                            onSuccess={handleGoogleLogin}
+                            onError={() => setError('Google login error')}
+                        />
+                    </GoogleOAuthProvider>
+
 
                     <div className="signup-link">
                         Don't have a vendor account?
