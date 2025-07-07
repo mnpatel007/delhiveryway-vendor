@@ -14,6 +14,8 @@ import AddProductPage from './pages/AddProductPage';
 import Navbar from './components/Navbar';
 import EditProductPage from './pages/EditProductPage';
 import VendorOrders from './pages/VendorOrders';
+import VerifyEmail from './pages/VerifyEmail';
+
 
 const PrivateRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
@@ -219,6 +221,7 @@ const AppRoutes = () => (
     <Route path="/add-product" element={<PrivateRoute><AddProductPage /></PrivateRoute>} />
     <Route path="/edit-product/:id" element={<PrivateRoute><EditProductPage /></PrivateRoute>} />
     <Route path="/vendor-orders" element={<PrivateRoute><VendorOrders /></PrivateRoute>} />
+    <Route path="/verify-email" element={<VerifyEmail />} />
   </Routes>
 );
 
