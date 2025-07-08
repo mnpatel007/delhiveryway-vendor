@@ -1,0 +1,118 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+.vendor-verify-email-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5e6d3 0%, #f0c6a7 100%);
+    font-family: 'Inter', sans-serif;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.vendor-verify-email-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.vendor-verify-email-card.success {
+    border-top: 5px solid #FF6B00;
+}
+
+.vendor-verify-email-card.error {
+    border-top: 5px solid #FF3D00;
+}
+
+.vendor-verify-email-icon {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 20px;
+    color: #FF6B00;
+}
+
+.vendor-verify-email-card.error .vendor-verify-email-icon {
+    color: #FF3D00;
+}
+
+.vendor-verify-email-icon svg {
+    width: 100%;
+    height: 100%;
+    stroke: currentColor;
+}
+
+.vendor-verify-email-card h2 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.vendor-verify-email-message {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.vendor-redirect-countdown {
+    background-color: #FFF3E0;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 20px;
+    color: #FF6B00;
+}
+
+.vendor-verify-email-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.btn-back-to-login,
+.btn-resend-verification {
+    flex: 1;
+    padding: 12px;
+    margin: 0 5px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-back-to-login {
+    background-color: #FF6B00;
+    color: white;
+}
+
+.btn-resend-verification {
+    background-color: #FFF3E0;
+    color: #FF6B00;
+}
+
+.btn-back-to-login:hover {
+    background-color: #FF8F00;
+}
+
+.btn-resend-verification:hover {
+    background-color: #FFE0B2;
+}
+
+@media (max-width: 600px) {
+    .vendor-verify-email-card {
+        padding: 20px;
+        margin: 0 10px;
+    }
+
+    .vendor-verify-email-actions {
+        flex-direction: column;
+    }
+
+    .btn-back-to-login,
+    .btn-resend-verification {
+        margin: 5px 0;
+    }
+}
