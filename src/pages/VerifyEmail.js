@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import './VendorVerifyEmail.css';
 
-const VendorVerifyEmail = () => {
+const VerifyEmail = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [message, setMessage] = useState('Verifying your vendor account...');
@@ -22,7 +22,7 @@ const VendorVerifyEmail = () => {
 
         const verifyVendorEmail = async () => {
             try {
-                const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/vendor/verify-email`, {
+                const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/auth/verify-email`, {
                     params: { token, email }
                 });
 
@@ -100,4 +100,4 @@ const VendorVerifyEmail = () => {
     );
 };
 
-export default VendorVerifyEmail;
+export default VerifyEmail;
