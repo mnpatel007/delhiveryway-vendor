@@ -307,8 +307,8 @@ const AppRoutes = () => (
     <Route path="/edit-product/:id" element={<PrivateRoute><EditProductPage /></PrivateRoute>} />
     <Route path="/vendor-orders" element={<PrivateRoute><VendorOrders /></PrivateRoute>} />
     <Route path="/verify-email" element={<VerifyEmail />} />
-    <Route path="/vendor/forgot-password" element={<VendorForgotPasswordPage />} />
-    <Route path="/vendor/reset-password" element={<VendorResetPasswordPage />} />
+    <Route path="/forgot-password" element={<VendorForgotPasswordPage />} />
+    <Route path="/reset-password" element={<VendorResetPasswordPage />} />
   </Routes>
 );
 
