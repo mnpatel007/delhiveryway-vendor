@@ -245,7 +245,7 @@ const GlobalOrderModal = () => {
 
 
   const handleReject = async () => {
-    if (newOrder.type === 'rehearsal') {
+    if (newOrder.type === 'staged') {
       alert('❌ You cannot reject a rehearsal order.');
       return;
     }
