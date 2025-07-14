@@ -290,17 +290,25 @@ const GlobalOrderModal = () => {
                 <strong>{item.shopName}</strong>
                 <span>{item.name}</span>
                 {newOrder.type === 'rehearsal' ? (
+                  // For Rehearsal Orders: Editable Quantity and Removable
                   <>
-                    <input
-                      type="number"
+                    <select
                       value={item.quantity}
-                      min="0"
-                      max={originalItems[index]?.quantity || 1}
                       onChange={(e) => handleQtyChange(index, e.target.value)}
-                    />
+                    >
+                      {[...Array(originalItems[index]?.quantity + 1).keys()]
+                        .slice(1)
+                        .map(num => (
+                          <option key={num} value={num}>
+                            {num}
+                          </option>
+                        ))
+                      }
+                    </select>
                     <button onClick={() => handleRemove(index)}>Remove</button>
                   </>
                 ) : (
+                  // For Staged (Paid) Orders: Read-only Quantity
                   <span>Quantity: {item.quantity}</span>
                 )}
               </div>
@@ -309,8 +317,20 @@ const GlobalOrderModal = () => {
         </ul>
 
         <div className="persistent-modal-actions">
-          <button onClick={handleConfirm}>Confirm Order</button>
-          <button onClick={handleReject}>Reject Order</button>
+          <button onClick={handleConfirm}>
+            {newOrder.type === 'rehearsal'
+              ? 'Confirm Rehearsal Order'
+              : 'Confirm Paid Order'}
+          </button>
+
+          {newOrder.type === 'staged' && (
+            <button
+              onClick={handleReject}
+              style={{ backgroundColor: 'red', color: 'white' }}
+            >
+              Reject Order
+            </button>
+          )}
         </div>
       </div>
     </div>
