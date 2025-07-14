@@ -285,32 +285,30 @@ const GlobalOrderModal = () => {
 
         <ul>
           {editedItems.map((item, index) => (
-            <li key={index}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div>
-                  <strong>{item.shopName}</strong><br />
-                  {item.name}
+            <li key={index} className="order-item">
+              <div className="order-item-content">
+                <div className="order-item-details">
+                  <strong>{item.shopName}</strong>
+                  <span>{item.name}</span>
                 </div>
 
                 {newOrder.type !== 'staged' ? (
-                  <>
+                  <div className="order-item-controls">
                     <input
                       type="number"
                       min="0"
                       max={originalItems[index]?.quantity || 1}
                       value={item.quantity}
                       onChange={(e) => handleQtyChange(index, e.target.value)}
-                      style={{ width: '60px', textAlign: 'center' }}
                     />
-                    <button
-                      onClick={() => handleRemove(index)}
-                      style={{ marginLeft: '10px' }}
-                    >
+                    <button onClick={() => handleRemove(index)}>
                       🗑️
                     </button>
-                  </>
+                  </div>
                 ) : (
-                  <span style={{ marginLeft: '10px' }}><strong>Quantity:</strong> {item.quantity}</span>
+                  <div className="order-item-quantity">
+                    <strong>Quantity:</strong> {item.quantity}
+                  </div>
                 )}
               </div>
             </li>
