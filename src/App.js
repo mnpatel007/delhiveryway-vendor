@@ -286,37 +286,19 @@ const GlobalOrderModal = () => {
         <ul>
           {editedItems.map((item, index) => (
             <li key={index}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div>
-                  <strong>{item.shopName}</strong><br />
-                  {item.name}
-                </div>
-
-                {newOrder.type === 'rehearsal' ? (
-                  <>
-                    <input
-                      type="number"
-                      min="0"
-                      max={originalItems[index]?.quantity || 1}
-                      value={item.quantity}
-                      onChange={(e) => handleQtyChange(index, e.target.value)}
-                      style={{ width: '60px', textAlign: 'center' }}
-                    />
-                    <button
-                      onClick={() => handleRemove(index)}
-                      style={{ marginLeft: '10px' }}
-                    >
-                      🗑️
-                    </button>
-                  </>
-                ) : (
-                  <span style={{ marginLeft: '10px' }}><strong>Quantity:</strong> {item.quantity}</span>
-                )}
+              <div>
+                <strong>{item.shopName}</strong>
+                <span>{item.name}</span>
+                <input
+                  type="number"
+                  value={item.quantity}
+                  onChange={(e) => handleQtyChange(index, e.target.value)}
+                />
+                <button onClick={() => handleRemove(index)}>Remove</button>
               </div>
             </li>
           ))}
         </ul>
-
 
         <div className="persistent-modal-actions">
           <button onClick={handleConfirm}>Confirm Order</button>
