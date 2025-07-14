@@ -292,7 +292,7 @@ const GlobalOrderModal = () => {
                   {item.name}
                 </div>
 
-                {newOrder.type === 'staged' ? (
+                {newOrder.type !== 'staged' ? (
                   <>
                     <input
                       type="number"
