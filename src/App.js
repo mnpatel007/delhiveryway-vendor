@@ -4,9 +4,7 @@ import { AuthProvider, AuthContext } from './context/AuthContext';
 import { VendorOrderProvider, VendorOrderContext } from './context/VendorOrderContext';
 import axios from 'axios';
 import './GlobalOrderModal.css';
-// Top of App.js
 import io from 'socket.io-client';
-const socket = io(process.env.REACT_APP_BACKEND_URL);
 
 // Import all your pages
 import LoginPage from './pages/LoginPage';
@@ -150,6 +148,8 @@ const Layout = ({ children }) => {
   );
 };
 
+
+const socket = io(process.env.REACT_APP_BACKEND_URL);
 // Global Order Modal Component
 const GlobalOrderModal = () => {
   const { newOrder, setNewOrder, clearOrder } = useContext(VendorOrderContext);
