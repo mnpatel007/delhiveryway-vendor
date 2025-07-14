@@ -217,6 +217,11 @@ const GlobalOrderModal = () => {
   };
 
   const handleConfirm = async () => {
+    if (editedItems.every(item => item.quantity === 0)) {
+      alert('❌ Cannot confirm an order with all quantities set to 0.');
+      return;
+    }
+
     try {
       if (newOrder.type === 'staged') {
         await axios.patch(
@@ -233,16 +238,23 @@ const GlobalOrderModal = () => {
       }
       clearOrder();
     } catch (err) {
-      console.error('Confirm failed:', err.message);
-      alert('Failed to confirm order');
+      console.error('❌ Confirm failed:', err.message);
+      alert('❌ Failed to confirm order');
     }
   };
 
+
   const handleReject = async () => {
+    if (newOrder.type === 'rehearsal') {
+      alert('❌ You cannot reject a rehearsal order.');
+      return;
+    }
+
     const reason = prompt('Why are you rejecting this order?');
     if (!reason) return;
 
     try {
+      console.log('🔁 PUT reject for order', newOrder.orderId);
       await axios.put(
         `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}`,
         { status: 'cancelled', reason },
@@ -250,10 +262,11 @@ const GlobalOrderModal = () => {
       );
       clearOrder();
     } catch (err) {
-      console.error('Reject failed:', err.message);
-      alert('Failed to reject order');
+      console.error('❌ Reject failed:', err.message);
+      alert('❌ Failed to reject order');
     }
   };
+
 
   // Render modal only if there's a new order
   if (!newOrder || editedItems.length === 0) {
