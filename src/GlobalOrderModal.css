@@ -1,13 +1,20 @@
 body {
     margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f5f5;
-    color: #333;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f6f9;
+    color: #2c3e50;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
 }
 
 a {
     text-decoration: none;
-    color: inherit;
+    color: #3498db;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #2980b9;
 }
 
 ul {
@@ -16,7 +23,7 @@ ul {
     margin: 0;
 }
 
-/* Spinner Loader */
+/* Spinner Loader with Modern Design */
 .loading-container {
     display: flex;
     flex-direction: column;
@@ -26,100 +33,174 @@ ul {
 }
 
 .spinner {
-    width: 36px;
-    height: 36px;
-    border: 4px solid #ccc;
-    border-top-color: #333;
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(52, 152, 219, 0.2);
+    border-top-color: #3498db;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 10px;
+    animation: spin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 @keyframes spin {
-    to {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
         transform: rotate(360deg);
     }
 }
 
-/* Error Message */
+/* Error Message with Improved Styling */
 .error-container {
     text-align: center;
     padding: 2rem;
-    color: #c00;
+    background-color: #ffebee;
+    color: #d32f2f;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    margin: 2rem auto;
 }
 
-/* 🔔 Global Vendor Modal Styles */
+/* 🔔 Global Vendor Modal Styles with Modern UX */
 .persistent-order-modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.45);
+    background-color: rgba(44, 62, 80, 0.7);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 9999;
+    backdrop-filter: blur(5px);
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .persistent-modal-content {
-    background: #fff;
-    padding: 2rem 2.5rem;
-    border-radius: 12px;
-    box-shadow: 0 0 16px rgba(0, 0, 0, 0.2);
-    max-width: 500px;
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(50, 50, 93, .1), 0 5px 15px rgba(0, 0, 0, .07);
+    max-width: 550px;
     width: 90%;
     text-align: center;
+    position: relative;
+    transform: perspective(1000px);
+    transition: all 0.4s ease-in-out;
+}
+
+.persistent-modal-content:hover {
+    transform: scale(1.02) perspective(1000px) rotateX(2deg);
+    box-shadow: 0 20px 40px rgba(50, 50, 93, .2), 0 8px 20px rgba(0, 0, 0, .1);
 }
 
 .persistent-modal-content h3 {
     margin-top: 0;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
+    color: #2c3e50;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 .persistent-modal-content ul {
     text-align: left;
-    margin: 1rem 0;
+    margin: 1.5rem 0;
+    max-height: 300px;
+    overflow-y: auto;
 }
 
 .persistent-modal-content li {
-    padding: 6px 0;
+    padding: 10px;
     font-size: 1rem;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.persistent-modal-content li:hover {
+    background-color: #f0f0f0;
 }
 
 .persistent-modal-actions {
     display: flex;
     justify-content: space-between;
-    margin-top: 1.5rem;
+    margin-top: 2rem;
+    gap: 15px;
 }
 
 .accept-btn,
 .reject-btn {
-    padding: 10px 20px;
+    flex: 1;
+    padding: 12px 20px;
     font-size: 1rem;
     font-weight: 600;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    width: 48%;
-    transition: background 0.2s ease-in-out;
+    transition: all 0.3s ease;
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .accept-btn {
-    background-color: #4caf50;
+    background-color: #2ecc71;
     color: white;
-    border: none;
+    box-shadow: 0 4px 6px rgba(46, 204, 113, 0.3);
 }
 
 .accept-btn:hover {
-    background-color: #449d48;
+    background-color: #27ae60;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(46, 204, 113, 0.4);
 }
 
 .reject-btn {
-    background-color: #f44336;
+    background-color: #e74c3c;
     color: white;
-    border: none;
+    box-shadow: 0 4px 6px rgba(231, 76, 60, 0.3);
 }
 
 .reject-btn:hover {
-    background-color: #d83c2f;
+    background-color: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(231, 76, 60, 0.4);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+    .persistent-modal-content {
+        width: 95%;
+        padding: 1.5rem;
+    }
+
+    .persistent-modal-actions {
+        flex-direction: column;
+    }
+
+    .accept-btn,
+    .reject-btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
 }
