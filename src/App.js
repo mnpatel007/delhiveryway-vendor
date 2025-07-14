@@ -156,44 +156,35 @@ const GlobalOrderModal = () => {
   const [originalItems, setOriginalItems] = useState([]);
 
   useEffect(() => {
-    // Socket connection
-    const socket = io(process.env.REACT_APP_BACKEND_URL);
-
     if (user?.user?.role === 'vendor') {
-      console.log('Registering vendor', user.user._id);
       socket.emit('registerVendor', user.user._id);
     }
 
-    // Handle new rehearsal order
-    socket.on('newOrder', (data) => {
-      console.log('Received rehearsal order', data);
-      showCrossBrowserNotification('rehearsal', data);
+    socket.on('newOrder', data => {
+      alert('🛎️ Rehearsal order received!');
+      setNewOrder({ ...data, type: 'rehearsal' });
     });
 
-    // Handle new staged (paid) order
-    socket.on('newStagedOrder', (data) => {
-      console.log('Received staged order', data);
-      showCrossBrowserNotification('staged', data);
+    socket.on('newStagedOrder', data => {
+      alert('✅ Paid order received! Confirm the final items.');
+      setNewOrder({ ...data, type: 'staged' });
     });
 
-    // Cleanup
     return () => {
       socket.off('newOrder');
       socket.off('newStagedOrder');
-      socket.disconnect();
     };
   }, [setNewOrder, user]);
 
-  // Order items and confirmation logic (existing code)
   useEffect(() => {
     if (newOrder?.items) {
-      const itemsWithProductId = newOrder.items.map(item => ({
+      const withIds = newOrder.items.map(item => ({
         ...item,
         productId: item.product?._id || item.productId,
         price: item.price || 0
       }));
-      setEditedItems(itemsWithProductId);
-      setOriginalItems(itemsWithProductId);
+      setEditedItems(withIds);
+      setOriginalItems(withIds);
     }
   }, [newOrder]);
 
@@ -201,6 +192,7 @@ const GlobalOrderModal = () => {
     const updated = [...editedItems];
     const originalQty = originalItems[index]?.quantity || 1;
     const qty = parseInt(value);
+
     if (!isNaN(qty) && qty >= 0 && qty <= originalQty) {
       updated[index].quantity = qty;
       setEditedItems(updated);
@@ -208,17 +200,40 @@ const GlobalOrderModal = () => {
   };
 
   const handleRemove = (index) => {
+    if (newOrder.type === 'staged') return; // Prevent for paid orders
     const updated = [...editedItems];
     updated.splice(index, 1);
-    setEditedItems(updated);
     const originalCopy = [...originalItems];
     originalCopy.splice(index, 1);
+    setEditedItems(updated);
     setOriginalItems(originalCopy);
   };
 
+  const handleReject = async () => {
+    if (newOrder.type === 'rehearsal') {
+      alert('❌ You cannot reject a rehearsal order.');
+      return;
+    }
+
+    const reason = prompt('Why are you rejecting this order?');
+    if (!reason) return;
+
+    try {
+      await axios.put(
+        `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}`,
+        { status: 'cancelled', reason },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+      clearOrder();
+    } catch (err) {
+      console.error('❌ Reject failed:', err.message);
+      alert('❌ Failed to reject order');
+    }
+  };
+
   const handleConfirm = async () => {
-    if (editedItems.every(item => item.quantity === 0)) {
-      alert('❌ Cannot confirm an order with all quantities set to 0.');
+    if (editedItems.every(i => i.quantity === 0)) {
+      alert('❌ Cannot confirm order with all items set to 0.');
       return;
     }
 
@@ -243,71 +258,81 @@ const GlobalOrderModal = () => {
     }
   };
 
-
-  const handleReject = async () => {
-    if (newOrder.type === 'rehearsal') {
-      alert('❌ You cannot reject a rehearsal order.');
-      return;
-    }
-
-    const reason = prompt('Why are you rejecting this order?');
-    if (!reason) return;
-
-    try {
-      console.log('🔁 PUT reject for order', newOrder.orderId);
-      await axios.put(
-        `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}`,
-        { status: 'cancelled', reason },
-        { headers: { Authorization: `Bearer ${user.token}` } }
-      );
-      clearOrder();
-    } catch (err) {
-      console.error('❌ Reject failed:', err.message);
-      alert('❌ Failed to reject order');
-    }
-  };
-
-
-  // Render modal only if there's a new order
-  if (!newOrder || editedItems.length === 0) {
-    return null;
-  }
+  if (!newOrder || editedItems.length === 0) return null;
 
   return (
     <div className="persistent-order-modal">
-      <div className="persistent-modal-content">
+      <div className="persistent-modal-content" role="alertdialog">
         <h3>
           {newOrder.type === 'staged'
-            ? 'Paid Order — Awaiting Confirmation'
-            : 'Rehearsal Order Review'}
+            ? '🧾 Paid Order — Awaiting Confirmation'
+            : '📝 Rehearsal Order Review'}
         </h3>
         <p><strong>Delivery Address:</strong> {newOrder.address}</p>
 
-        <ul>
+        <ul style={{ listStyle: 'none', padding: 0 }}>
           {editedItems.map((item, index) => (
-            <li key={index}>
-              <div>
-                <strong>{item.shopName}</strong>
-                <span>{item.name}</span>
-                <input
-                  type="number"
-                  value={item.quantity}
-                  onChange={(e) => handleQtyChange(index, e.target.value)}
-                />
-                <button onClick={() => handleRemove(index)}>Remove</button>
+            <li key={index} style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <div>
+                  <strong>{item.shopName}</strong><br />
+                  {item.name}
+                </div>
+                <span>₹{item.price}</span>
+                <span>×</span>
+                {newOrder.type === 'rehearsal' ? (
+                  <input
+                    type="number"
+                    min="0"
+                    max={originalItems[index]?.quantity || 1}
+                    value={item.quantity}
+                    onChange={(e) => handleQtyChange(index, e.target.value)}
+                    style={{ width: '60px', textAlign: 'center' }}
+                  />
+                ) : (
+                  <span>{item.quantity}</span>
+                )}
+                <span>= ₹{(item.price * item.quantity).toFixed(2)}</span>
+
+                {newOrder.type === 'rehearsal' && (
+                  <button
+                    onClick={() => handleRemove(index)}
+                    aria-label="Remove item"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '18px'
+                    }}
+                  >
+                    🗑️
+                  </button>
+                )}
               </div>
             </li>
           ))}
         </ul>
 
         <div className="persistent-modal-actions">
-          <button onClick={handleConfirm}>Confirm Order</button>
-          <button onClick={handleReject}>Reject Order</button>
+          <button
+            onClick={handleConfirm}
+            className="accept-btn"
+            disabled={editedItems.length === 0 || editedItems.every(i => i.quantity === 0)}
+          >
+            {newOrder.type === 'staged' ? '✅ Confirm Paid Order' : '✅ Confirm Final Order'}
+          </button>
+          <button
+            onClick={handleReject}
+            className="reject-btn"
+          >
+            ❌ Reject Order
+          </button>
         </div>
       </div>
     </div>
   );
 };
+
 
 // Routes Component
 const AppRoutes = () => (
