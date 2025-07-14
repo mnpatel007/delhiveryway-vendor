@@ -289,12 +289,20 @@ const GlobalOrderModal = () => {
               <div>
                 <strong>{item.shopName}</strong>
                 <span>{item.name}</span>
-                <input
-                  type="number"
-                  value={item.quantity}
-                  onChange={(e) => handleQtyChange(index, e.target.value)}
-                />
-                <button onClick={() => handleRemove(index)}>Remove</button>
+                {newOrder.type === 'rehearsal' ? (
+                  <>
+                    <input
+                      type="number"
+                      value={item.quantity}
+                      min="0"
+                      max={originalItems[index]?.quantity || 1}
+                      onChange={(e) => handleQtyChange(index, e.target.value)}
+                    />
+                    <button onClick={() => handleRemove(index)}>Remove</button>
+                  </>
+                ) : (
+                  <span>Quantity: {item.quantity}</span>
+                )}
               </div>
             </li>
           ))}
