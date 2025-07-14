@@ -289,48 +289,20 @@ const GlobalOrderModal = () => {
               <div>
                 <strong>{item.shopName}</strong>
                 <span>{item.name}</span>
-                {newOrder.type === 'rehearsal' ? (
-                  // For Rehearsal Orders: Editable Quantity and Removable
-                  <>
-                    <select
-                      value={item.quantity}
-                      onChange={(e) => handleQtyChange(index, e.target.value)}
-                    >
-                      {[...Array(originalItems[index]?.quantity + 1).keys()]
-                        .slice(1)
-                        .map(num => (
-                          <option key={num} value={num}>
-                            {num}
-                          </option>
-                        ))
-                      }
-                    </select>
-                    <button onClick={() => handleRemove(index)}>Remove</button>
-                  </>
-                ) : (
-                  // For Staged (Paid) Orders: Read-only Quantity
-                  <span>Quantity: {item.quantity}</span>
-                )}
+                <input
+                  type="number"
+                  value={item.quantity}
+                  onChange={(e) => handleQtyChange(index, e.target.value)}
+                />
+                <button onClick={() => handleRemove(index)}>Remove</button>
               </div>
             </li>
           ))}
         </ul>
 
         <div className="persistent-modal-actions">
-          <button onClick={handleConfirm}>
-            {newOrder.type === 'rehearsal'
-              ? 'Confirm Rehearsal Order'
-              : 'Confirm Paid Order'}
-          </button>
-
-          {newOrder.type === 'staged' && (
-            <button
-              onClick={handleReject}
-              style={{ backgroundColor: 'red', color: 'white' }}
-            >
-              Reject Order
-            </button>
-          )}
+          <button onClick={handleConfirm}>Confirm Order</button>
+          <button onClick={handleReject}>Reject Order</button>
         </div>
       </div>
     </div>
