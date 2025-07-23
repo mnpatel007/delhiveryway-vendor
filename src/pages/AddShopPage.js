@@ -7,7 +7,7 @@ import './AddShopPage.css';
 const AddShopPage = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
-    const [form, setForm] = useState({ name: '', description: '', location: '' });
+    const [form, setForm] = useState({ name: '', description: '', location: '', lat: '', lng: '' });
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
 
@@ -26,6 +26,28 @@ const AddShopPage = () => {
         setErrors({ ...errors, [e.target.name]: '' }); // Clear error on input change
     };
 
+    // Fetch current location using browser geolocation
+    const handleFetchLocation = () => {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser.');
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setForm((prev) => ({
+                    ...prev,
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                    location: `${position.coords.latitude}, ${position.coords.longitude}`
+                }));
+            },
+            (error) => {
+                alert('Failed to fetch location. Please allow location access.');
+            },
+            { enableHighAccuracy: true }
+        );
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validate()) return;
@@ -37,7 +59,10 @@ const AddShopPage = () => {
                 {
                     name: form.name.trim(),
                     description: form.description.trim(),
-                    location: form.location.trim(),
+                    location: {
+                        lat: form.lat ? parseFloat(form.lat) : undefined,
+                        lng: form.lng ? parseFloat(form.lng) : undefined
+                    },
                 },
                 {
                     headers: { Authorization: `Bearer ${user.token}` },
@@ -105,21 +130,39 @@ const AddShopPage = () => {
                     <label htmlFor="location" style={{ display: 'block', marginBottom: 4 }}>
                         Location <span style={{ color: 'red' }}>*</span>
                     </label>
-                    <input
-                        id="location"
-                        name="location"
-                        value={form.location}
-                        onChange={handleChange}
-                        placeholder="Enter shop location"
-                        className={`input-field ${errors.location ? 'input-error' : ''}`}
-                        disabled={loading}
-                        style={{
-                            width: '100%',
-                            padding: '0.5rem',
-                            borderRadius: 4,
-                            border: errors.location ? '1px solid red' : '1px solid #ccc',
-                        }}
-                    />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        <input
+                            id="location"
+                            name="location"
+                            value={form.location}
+                            onChange={handleChange}
+                            placeholder="Latitude, Longitude"
+                            className={`input-field ${errors.location ? 'input-error' : ''}`}
+                            disabled={loading}
+                            style={{
+                                width: '100%',
+                                padding: '0.5rem',
+                                borderRadius: 4,
+                                border: errors.location ? '1px solid red' : '1px solid #ccc',
+                            }}
+                        />
+                        <button
+                            type="button"
+                            onClick={handleFetchLocation}
+                            style={{
+                                background: '#1976d2',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: 4,
+                                padding: '0.5rem 1rem',
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                            }}
+                            disabled={loading}
+                        >
+                            Fetch Location
+                        </button>
+                    </div>
                     {errors.location && <small style={{ color: 'red' }}>{errors.location}</small>}
                 </div>
 
