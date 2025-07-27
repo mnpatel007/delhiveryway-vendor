@@ -4,7 +4,7 @@ import axios from 'axios';
 
 export const VendorOrderContext = createContext();
 
-const socket = io('https://delhiveryway-backend-1.onrender.com', {
+const socket = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000', {
     withCredentials: true,
     transports: ['websocket', 'polling']
 });
