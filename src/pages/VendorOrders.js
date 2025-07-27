@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext, useCallback } from 'react';
 import axios from 'axios';
+import io from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
 import './VendorOrders.css';
 
@@ -37,6 +38,45 @@ const VendorOrders = () => {
     useEffect(() => {
         fetchOrders();
     }, [fetchOrders]);
+
+    // Socket connection for real-time updates
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const socket = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000');
+
+        // Join vendor room
+        socket.emit('join', `vendor_${user.id}`);
+
+        // Listen for order status updates
+        socket.on('orderStatusUpdate', (data) => {
+            console.log('Received order status update:', data);
+
+            // Update the specific order in state
+            setOrders(prevOrders =>
+                prevOrders.map(order =>
+                    order._id === data.orderId
+                        ? {
+                            ...order,
+                            status: data.status,
+                            pickedUpAt: data.status === 'picked_up' ? data.timestamp : order.pickedUpAt,
+                            deliveredAt: data.status === 'delivered' ? data.timestamp : order.deliveredAt
+                        }
+                        : order
+                )
+            );
+
+            // Show notification
+            if (data.message) {
+                // You can add a toast notification here
+                console.log('Order update:', data.message);
+            }
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [user?.id]);
 
     const updateStatus = async (orderId, newStatus) => {
         if (!token) return;
