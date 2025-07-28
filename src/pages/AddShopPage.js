@@ -34,73 +34,55 @@ const AddShopPage = () => {
     };
 
     // Fetch current location using browser geolocation
-    const handleFetchLocation = () => {
-        if (!navigator.geolocation) {
-            alert('Geolocation is not supported by your browser.');
+    const handleFindLocation = async () => {
+        if (!form.location.trim()) {
+            alert('Please enter an address in the location field first.');
             return;
         }
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                try {
-                    const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`);
-                    const address = response.data.results[0]?.formatted_address || `${lat}, ${lng}`;
-                    setForm((prev) => ({
-                        ...prev,
-                        lat,
-                        lng,
-                        location: address,
-                        address: address
-                    }));
-                } catch (error) {
-                    alert('Failed to fetch address. Please try again.');
-                    setForm((prev) => ({
-                        ...prev,
-                        lat,
-                        lng,
-                        location: `${lat}, ${lng}`
-                    }));
-                }
-            },
-            (error) => {
-                alert('Failed to fetch location. Please allow location access.');
-            },
-            { enableHighAccuracy: true }
-        );
+        setLoading(true);
+        try {
+            const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(form.location)}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`);
+            if (response.data.results && response.data.results.length > 0) {
+                const location = response.data.results[0].geometry.location;
+                const address = response.data.results[0].formatted_address;
+                setForm(prev => ({
+                    ...prev,
+                    lat: location.lat,
+                    lng: location.lng,
+                    location: address,
+                    address: address
+                }));
+                alert('Location found and coordinates saved!');
+            } else {
+                alert('Could not find location. Please check the address.');
+            }
+        } catch (error) {
+            alert('An error occurred while finding the location.');
+        }
+        setLoading(false);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validate()) return;
 
+        if (!form.lat || !form.lng) {
+            alert('Please use the "Find Location" button to get coordinates for the address before saving.');
+            return;
+        }
+
         try {
             setLoading(true);
-            let { lat, lng, address } = form;
-
-            if (address && (!lat || !lng)) {
-                const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`);
-                if (response.data.results && response.data.results.length > 0) {
-                    const location = response.data.results[0].geometry.location;
-                    lat = location.lat;
-                    lng = location.lng;
-                } else {
-                    alert('Could not find coordinates for the address. Please check the address or use "Fetch Location".');
-                    setLoading(false);
-                    return;
-                }
-            }
-
             await axios.post(
                 `${process.env.REACT_APP_BACKEND_URL}/api/shops`,
                 {
                     name: form.name.trim(),
                     description: form.description.trim(),
                     location: {
-                        lat: lat ? parseFloat(lat) : undefined,
-                        lng: lng ? parseFloat(lng) : undefined
+                        lat: parseFloat(form.lat),
+                        lng: parseFloat(form.lng)
                     },
-                    address: address,
+                    address: form.address,
                 },
                 {
                     headers: { Authorization: `Bearer ${user.token}` },
@@ -186,7 +168,7 @@ const AddShopPage = () => {
                         />
                         <button
                             type="button"
-                            onClick={handleFetchLocation}
+                            onClick={handleFindLocation}
                             style={{
                                 background: '#1976d2',
                                 color: '#fff',
@@ -198,7 +180,7 @@ const AddShopPage = () => {
                             }}
                             disabled={loading}
                         >
-                            Fetch Location
+                            Find Location
                         </button>
                     </div>
                     {errors.location && <small style={{ color: 'red' }}>{errors.location}</small>}
