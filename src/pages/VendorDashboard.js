@@ -166,11 +166,7 @@ const VendorDashboard = () => {
                             </header>
                             <p className="shop-description">{shop.description}</p>
                             <p className="shop-location">
-                                <strong>Location:</strong> {
-                                    typeof shop.location === 'object' && shop.location !== null
-                                        ? `${shop.location.lat}, ${shop.location.lng}`
-                                        : shop.location || 'Not specified'
-                                }
+                                <strong>Location:</strong> {shop.address || 'Not specified'}
                             </p>
 
                             <section className="shop-products" aria-label={`Products in ${shop.name}`}>

@@ -22,8 +22,13 @@ const AddShopPage = () => {
     };
 
     const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-        setErrors({ ...errors, [e.target.name]: '' }); // Clear error on input change
+        const { name, value } = e.target;
+        const newForm = { ...form, [name]: value };
+        if (name === 'location') {
+            newForm.address = value;
+        }
+        setForm(newForm);
+        setErrors({ ...errors, [name]: '' });
     };
 
     // Fetch current location using browser geolocation
