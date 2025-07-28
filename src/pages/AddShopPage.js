@@ -42,7 +42,8 @@ const AddShopPage = () => {
         setLoading(true);
         try {
             const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(form.location)}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`);
-            if (response.data.results && response.data.results.length > 0) {
+
+            if (response.data.status === 'OK') {
                 const location = response.data.results[0].geometry.location;
                 const address = response.data.results[0].formatted_address;
                 setForm(prev => ({
@@ -53,11 +54,21 @@ const AddShopPage = () => {
                     address: address
                 }));
                 alert('Location found and coordinates saved!');
+            } else if (response.data.status === 'ZERO_RESULTS') {
+                alert('Could not find location. Please check the address and try again.');
             } else {
-                alert('Could not find location. Please check the address.');
+                let errorMessage = 'An error occurred while finding the location.';
+                if (response.data.error_message) {
+                    errorMessage += `\nError: ${response.data.error_message}`;
+                } else {
+                    errorMessage += `\nStatus: ${response.data.status}`;
+                }
+                console.error('Geocoding API Error:', response.data);
+                alert(errorMessage);
             }
         } catch (error) {
-            alert('An error occurred while finding the location.');
+            console.error("Geocoding network error:", error);
+            alert('A network error occurred while trying to find the location. Please check your connection.');
         }
         setLoading(false);
     };
