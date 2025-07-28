@@ -26,6 +26,8 @@ const AddShopPage = () => {
         const newForm = { ...form, [name]: value };
         if (name === 'location') {
             newForm.address = value;
+            newForm.lat = '';
+            newForm.lng = '';
         }
         setForm(newForm);
         setErrors({ ...errors, [name]: '' });
@@ -74,16 +76,31 @@ const AddShopPage = () => {
 
         try {
             setLoading(true);
+            let { lat, lng, address } = form;
+
+            if (address && (!lat || !lng)) {
+                const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`);
+                if (response.data.results && response.data.results.length > 0) {
+                    const location = response.data.results[0].geometry.location;
+                    lat = location.lat;
+                    lng = location.lng;
+                } else {
+                    alert('Could not find coordinates for the address. Please check the address or use "Fetch Location".');
+                    setLoading(false);
+                    return;
+                }
+            }
+
             await axios.post(
                 `${process.env.REACT_APP_BACKEND_URL}/api/shops`,
                 {
                     name: form.name.trim(),
                     description: form.description.trim(),
                     location: {
-                        lat: form.lat ? parseFloat(form.lat) : undefined,
-                        lng: form.lng ? parseFloat(form.lng) : undefined
+                        lat: lat ? parseFloat(lat) : undefined,
+                        lng: lng ? parseFloat(lng) : undefined
                     },
-                    address: form.address,
+                    address: address,
                 },
                 {
                     headers: { Authorization: `Bearer ${user.token}` },
