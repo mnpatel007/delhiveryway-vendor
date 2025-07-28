@@ -7,7 +7,7 @@ import './AddShopPage.css';
 const AddShopPage = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
-    const [form, setForm] = useState({ name: '', description: '', location: '', lat: '', lng: '' });
+    const [form, setForm] = useState({ name: '', description: '', location: '', lat: '', lng: '', address: '' });
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
 
@@ -33,13 +33,28 @@ const AddShopPage = () => {
             return;
         }
         navigator.geolocation.getCurrentPosition(
-            (position) => {
-                setForm((prev) => ({
-                    ...prev,
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                    location: `${position.coords.latitude}, ${position.coords.longitude}`
-                }));
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                try {
+                    const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`);
+                    const address = response.data.results[0]?.formatted_address || `${lat}, ${lng}`;
+                    setForm((prev) => ({
+                        ...prev,
+                        lat,
+                        lng,
+                        location: address,
+                        address: address
+                    }));
+                } catch (error) {
+                    alert('Failed to fetch address. Please try again.');
+                    setForm((prev) => ({
+                        ...prev,
+                        lat,
+                        lng,
+                        location: `${lat}, ${lng}`
+                    }));
+                }
             },
             (error) => {
                 alert('Failed to fetch location. Please allow location access.');
@@ -63,6 +78,7 @@ const AddShopPage = () => {
                         lat: form.lat ? parseFloat(form.lat) : undefined,
                         lng: form.lng ? parseFloat(form.lng) : undefined
                     },
+                    address: form.address,
                 },
                 {
                     headers: { Authorization: `Bearer ${user.token}` },
