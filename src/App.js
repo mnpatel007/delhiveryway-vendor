@@ -15,6 +15,7 @@ import AddProductPage from './pages/AddProductPage';
 import Navbar from './components/Navbar';
 import NotificationCenter from './components/NotificationCenter';
 import ConnectionStatus from './components/ConnectionStatus';
+import SocketDebugPanel from './components/SocketDebugPanel';
 import EditProductPage from './pages/EditProductPage';
 import VendorOrders from './pages/VendorOrders';
 import VerifyEmail from './pages/VerifyEmail';
@@ -147,6 +148,7 @@ const Layout = ({ children }) => {
       <ConnectionStatus />
       {!hideNavbar && <Navbar />}
       {!hideNavbar && <NotificationCenter />}
+      <SocketDebugPanel />
       {children}
     </>
   );

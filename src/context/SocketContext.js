@@ -238,6 +238,45 @@ export const SocketProvider = ({ children }) => {
                 }
             });
 
+            // Listen for payment confirmations
+            newSocket.on('paymentConfirmed', (data) => {
+                console.log('💳 Customer payment confirmed:', data);
+
+                addNotification({
+                    id: Date.now(),
+                    type: 'payment_confirmed',
+                    title: '💳 Payment Received!',
+                    message: `Customer has paid ₹${data.amount}. Order is now confirmed and ready for preparation.`,
+                    data: data,
+                    timestamp: new Date().toISOString()
+                });
+
+                playNotificationSound();
+                showBrowserNotification('💳 Payment Received!', `₹${data.amount} received. Start preparing the order.`);
+
+                // Refresh vendor data
+                if (window.refreshVendorData) {
+                    window.refreshVendorData();
+                }
+            });
+
+            // Listen for delivery partner assignments
+            newSocket.on('deliveryAssigned', (data) => {
+                console.log('🚚 Delivery partner assigned:', data);
+
+                addNotification({
+                    id: Date.now(),
+                    type: 'delivery_assigned',
+                    title: '🚚 Delivery Partner Assigned!',
+                    message: `${data.deliveryPartner?.name || 'A delivery partner'} will pick up the order from your location.`,
+                    data: data,
+                    timestamp: new Date().toISOString()
+                });
+
+                playNotificationSound();
+                showBrowserNotification('🚚 Delivery Partner Assigned!', 'Prepare the order for pickup');
+            });
+
             // Listen for delivery assignments
             newSocket.on('deliveryAssigned', (data) => {
                 console.log('🚚 Delivery assigned:', data);
