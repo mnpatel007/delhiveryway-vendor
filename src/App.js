@@ -2,9 +2,9 @@ import React, { useContext, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { VendorOrderProvider, VendorOrderContext } from './context/VendorOrderContext';
+import { SocketProvider, useSocket } from './context/SocketContext';
 import axios from 'axios';
 import './GlobalOrderModal.css';
-import io from 'socket.io-client';
 
 // Import all your pages
 import LoginPage from './pages/LoginPage';
@@ -13,6 +13,8 @@ import VendorDashboard from './pages/VendorDashboard';
 import AddShopPage from './pages/AddShopPage';
 import AddProductPage from './pages/AddProductPage';
 import Navbar from './components/Navbar';
+import NotificationCenter from './components/NotificationCenter';
+import ConnectionStatus from './components/ConnectionStatus';
 import EditProductPage from './pages/EditProductPage';
 import VendorOrders from './pages/VendorOrders';
 import VerifyEmail from './pages/VerifyEmail';
@@ -142,7 +144,9 @@ const Layout = ({ children }) => {
   const hideNavbar = location.pathname === '/login' || location.pathname === '/signup';
   return (
     <>
+      <ConnectionStatus />
       {!hideNavbar && <Navbar />}
+      {!hideNavbar && <NotificationCenter />}
       {children}
     </>
   );
@@ -152,37 +156,20 @@ const Layout = ({ children }) => {
 const GlobalOrderModal = () => {
   const { newOrder, setNewOrder, clearOrder } = useContext(VendorOrderContext);
   const { user } = useContext(AuthContext);
+  const { incomingOrders, acceptOrder, rejectOrder, removeIncomingOrder } = useSocket();
   const [editedItems, setEditedItems] = useState([]);
   const [originalItems, setOriginalItems] = useState([]);
 
+  // Handle incoming orders from socket context
   useEffect(() => {
-    // Socket connection
-    const socket = io(process.env.REACT_APP_BACKEND_URL);
-
-    if (user?.user?.role === 'vendor') {
-      console.log('Registering vendor', user.user._id);
-      socket.emit('registerVendor', user.user._id);
+    if (incomingOrders.length > 0 && !newOrder) {
+      const latestOrder = incomingOrders[0];
+      setNewOrder({
+        ...latestOrder,
+        type: latestOrder.isPaid ? 'staged' : 'rehearsal'
+      });
     }
-
-    // Handle new rehearsal order
-    socket.on('newOrder', (data) => {
-      console.log('Received rehearsal order', data);
-      showCrossBrowserNotification('rehearsal', data);
-    });
-
-    // Handle new staged (paid) order
-    socket.on('newStagedOrder', (data) => {
-      console.log('Received staged order', data);
-      showCrossBrowserNotification('staged', data);
-    });
-
-    // Cleanup
-    return () => {
-      socket.off('newOrder');
-      socket.off('newStagedOrder');
-      socket.disconnect();
-    };
-  }, [setNewOrder, user]);
+  }, [incomingOrders, newOrder, setNewOrder]);
 
   // Order items and confirmation logic (existing code)
   useEffect(() => {
@@ -223,20 +210,11 @@ const GlobalOrderModal = () => {
     }
 
     try {
-      if (newOrder.type === 'staged') {
-        await axios.patch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/confirm/${newOrder.orderId}`,
-          {},
-          { headers: { Authorization: `Bearer ${user.token}` } }
-        );
-      } else {
-        await axios.put(
-          `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}/confirm`,
-          { items: editedItems },
-          { headers: { Authorization: `Bearer ${user.token}` } }
-        );
+      const success = await acceptOrder(newOrder._id || newOrder.orderId);
+      if (success) {
+        clearOrder();
+        removeIncomingOrder(newOrder._id || newOrder.orderId);
       }
-      clearOrder();
     } catch (err) {
       console.error('❌ Confirm failed:', err.message);
       alert('❌ Failed to confirm order');
@@ -254,13 +232,11 @@ const GlobalOrderModal = () => {
     if (!reason) return;
 
     try {
-      console.log('🔁 PUT reject for order', newOrder.orderId);
-      await axios.put(
-        `${process.env.REACT_APP_BACKEND_URL}/api/vendor/orders/${newOrder.orderId}`,
-        { status: 'cancelled', reason },
-        { headers: { Authorization: `Bearer ${user.token}` } }
-      );
-      clearOrder();
+      const success = await rejectOrder(newOrder._id || newOrder.orderId, reason);
+      if (success) {
+        clearOrder();
+        removeIncomingOrder(newOrder._id || newOrder.orderId);
+      }
     } catch (err) {
       console.error('❌ Reject failed:', err.message);
       alert('❌ Failed to reject order');
@@ -347,10 +323,12 @@ function WrappedApp() {
   return (
     <BrowserRouter>
       {user?.user?.role === 'vendor' ? (
-        <VendorOrderProvider vendorId={user.user._id}>
-          <GlobalOrderModal />
-          <Layout><AppRoutes /></Layout>
-        </VendorOrderProvider>
+        <SocketProvider>
+          <VendorOrderProvider vendorId={user.user._id}>
+            <GlobalOrderModal />
+            <Layout><AppRoutes /></Layout>
+          </VendorOrderProvider>
+        </SocketProvider>
       ) : (
         <Layout><AppRoutes /></Layout>
       )}
