@@ -326,7 +326,6 @@ export const SocketProvider = ({ children }) => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    items: [], // Will be handled by backend
                     status: 'confirmed'
                 })
             });
