@@ -158,7 +158,17 @@ const Layout = ({ children }) => {
 const GlobalOrderModal = () => {
   const { newOrder, setNewOrder, clearOrder } = useContext(VendorOrderContext);
   const { user } = useContext(AuthContext);
-  const { incomingOrders, acceptOrder, rejectOrder, removeIncomingOrder } = useSocket();
+  
+  // Safely get socket context
+  let socketContext;
+  try {
+    socketContext = useSocket();
+  } catch (error) {
+    // Socket provider not available
+    return null;
+  }
+  
+  const { incomingOrders, acceptOrder, rejectOrder, removeIncomingOrder } = socketContext;
   const [editedItems, setEditedItems] = useState([]);
   const [originalItems, setOriginalItems] = useState([]);
 
@@ -320,21 +330,30 @@ const AppRoutes = () => (
   </Routes>
 );
 
+// App Content Component
+const AppContent = () => {
+  const { user } = useContext(AuthContext);
+  
+  if (user?.user?.role === 'vendor') {
+    return (
+      <VendorOrderProvider vendorId={user.user._id}>
+        <GlobalOrderModal />
+        <Layout><AppRoutes /></Layout>
+      </VendorOrderProvider>
+    );
+  }
+  
+  return <Layout><AppRoutes /></Layout>;
+};
+
 // Wrapped App Component
 function WrappedApp() {
   const { user } = useContext(AuthContext);
   return (
     <BrowserRouter>
-      {user?.user?.role === 'vendor' ? (
-        <SocketProvider>
-          <VendorOrderProvider vendorId={user.user._id}>
-            <GlobalOrderModal />
-            <Layout><AppRoutes /></Layout>
-          </VendorOrderProvider>
-        </SocketProvider>
-      ) : (
-        <Layout><AppRoutes /></Layout>
-      )}
+      <SocketProvider>
+        <AppContent />
+      </SocketProvider>
     </BrowserRouter>
   );
 }
