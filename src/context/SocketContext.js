@@ -141,7 +141,7 @@ export const SocketProvider = ({ children }) => {
 
             // Listen for new orders
             newSocket.on('newOrder', (order) => {
-                console.log('📦 New order received via socket:', order);
+                console.log('📦 New order received via socket');
 
                 // Add to incoming orders queue
                 setIncomingOrders(prev => {
@@ -181,7 +181,7 @@ export const SocketProvider = ({ children }) => {
 
             // Listen for rehearsal checkout requests
             newSocket.on('rehearsalCheckoutRequest', (data) => {
-                console.log('🎭 Rehearsal checkout request:', data);
+                console.log('🎭 Rehearsal checkout request received');
 
                 addNotification({
                     id: Date.now(),
@@ -198,7 +198,7 @@ export const SocketProvider = ({ children }) => {
 
             // Listen for final checkout requests
             newSocket.on('finalCheckoutRequest', (data) => {
-                console.log('✅ Final checkout request:', data);
+                console.log('✅ Final checkout request received');
 
                 addNotification({
                     id: Date.now(),
@@ -215,7 +215,7 @@ export const SocketProvider = ({ children }) => {
 
             // Listen for order status updates
             newSocket.on('orderStatusUpdate', (data) => {
-                console.log('📋 Order status update:', data);
+                console.log('📋 Order status update received');
 
                 addNotification({
                     id: Date.now(),
@@ -240,7 +240,7 @@ export const SocketProvider = ({ children }) => {
 
             // Listen for payment confirmations
             newSocket.on('paymentConfirmed', (data) => {
-                console.log('💳 Customer payment confirmed:', data);
+                console.log('💳 Customer payment confirmed');
 
                 addNotification({
                     id: Date.now(),
@@ -262,7 +262,7 @@ export const SocketProvider = ({ children }) => {
 
             // Listen for delivery partner assignments
             newSocket.on('deliveryAssigned', (data) => {
-                console.log('🚚 Delivery partner assigned:', data);
+                console.log('🚚 Delivery partner assigned');
 
                 addNotification({
                     id: Date.now(),
@@ -279,7 +279,7 @@ export const SocketProvider = ({ children }) => {
 
             // Listen for delivery assignments
             newSocket.on('deliveryAssigned', (data) => {
-                console.log('🚚 Delivery assigned:', data);
+                console.log('🚚 Delivery assigned');
 
                 addNotification({
                     id: Date.now(),
@@ -313,8 +313,7 @@ export const SocketProvider = ({ children }) => {
     // Accept order
     const acceptOrder = async (orderId, modifiedItems = null) => {
         try {
-            console.log('🔄 Accepting order:', orderId);
-            console.log('📦 Modified items:', modifiedItems);
+            console.log('🔄 Accepting order');
 
             // Try different endpoints based on order type
             let response;
@@ -338,7 +337,7 @@ export const SocketProvider = ({ children }) => {
                 }));
             }
 
-            console.log('📤 Sending request body:', requestBody);
+            console.log('📤 Sending request body');
 
             // First try the rehearsal order confirmation endpoint
             response = await fetch(`${BACKEND_URL}/api/vendor/orders/${orderId}/confirm`, {
@@ -404,7 +403,7 @@ export const SocketProvider = ({ children }) => {
     // Reject order
     const rejectOrder = async (orderId, reason) => {
         try {
-            console.log('🔄 Rejecting order:', orderId, 'Reason:', reason);
+            console.log('🔄 Rejecting order');
 
             let response;
 
