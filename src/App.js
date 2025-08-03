@@ -212,7 +212,8 @@ const GlobalOrderModal = () => {
     }
 
     try {
-      const success = await acceptOrder(newOrder._id || newOrder.orderId);
+      console.log('🔄 Confirming order with edited items:', editedItems);
+      const success = await acceptOrder(newOrder._id || newOrder.orderId, editedItems);
       if (success) {
         clearOrder();
         removeIncomingOrder(newOrder._id || newOrder.orderId);

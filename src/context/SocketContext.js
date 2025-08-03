@@ -311,12 +311,34 @@ export const SocketProvider = ({ children }) => {
     };
 
     // Accept order
-    const acceptOrder = async (orderId) => {
+    const acceptOrder = async (orderId, modifiedItems = null) => {
         try {
             console.log('🔄 Accepting order:', orderId);
+            console.log('📦 Modified items:', modifiedItems);
 
             // Try different endpoints based on order type
             let response;
+
+            // Prepare the request body
+            const requestBody = {
+                status: 'confirmed'
+            };
+
+            // If modified items are provided, include them
+            if (modifiedItems && modifiedItems.length > 0) {
+                requestBody.items = modifiedItems.map(item => ({
+                    productId: item.productId || item._id,
+                    quantity: parseInt(item.quantity),
+                    product: item.product || {
+                        _id: item.productId || item._id,
+                        name: item.name,
+                        price: item.price,
+                        shopId: item.shopId
+                    }
+                }));
+            }
+
+            console.log('📤 Sending request body:', requestBody);
 
             // First try the rehearsal order confirmation endpoint
             response = await fetch(`${BACKEND_URL}/api/vendor/orders/${orderId}/confirm`, {
@@ -325,9 +347,7 @@ export const SocketProvider = ({ children }) => {
                     'Authorization': `Bearer ${user.token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    status: 'confirmed'
-                })
+                body: JSON.stringify(requestBody)
             });
 
             // If that fails, try the accept endpoint
